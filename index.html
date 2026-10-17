@@ -237,6 +237,31 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
 .copybox{width:100%;min-height:120px;font-family:var(--mono);font-size:.78rem;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink)}
 .tabbar .in{grid-template-columns:repeat(5,1fr)!important}
 .tabbar button{font-size:.7rem}
+
+.teamseg{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px}
+.teamseg button{border:0;background:transparent;border-radius:9px;padding:7px 2px;font-weight:600;font-size:.88rem;cursor:pointer;color:var(--muted)}
+.teamseg button[aria-pressed="true"]{background:var(--navy);color:var(--on-navy)}
+.tl{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;font-family:var(--display);font-weight:700;font-size:.95rem;background:var(--navy);color:var(--on-navy);vertical-align:-4px}
+.dayrow{border-top:1px solid var(--line);padding:6px 12px 8px}
+.dayrow:first-child{border-top:0}
+.dayrow .dh{display:flex;justify-content:space-between;align-items:baseline;padding:2px 0 4px}
+.dayrow .dh b{font-weight:600}
+.dayrow .dh small{color:var(--muted);font-size:.78rem}
+.slot{display:grid;grid-template-columns:76px 1fr 14px;gap:8px;align-items:center;width:100%;border:0;background:none;padding:4px 0;cursor:pointer;text-align:left}
+.slot .sl{display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600}
+.slot .go{color:var(--muted)}
+.slot.bad .mcells{border-radius:10px;box-shadow:0 0 0 2px var(--bad-bg)}
+.twoslots{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.twoslots .card{padding:10px;display:flex;flex-direction:column;gap:8px}
+.twoslots h4{margin:0;display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase}
+@media (max-width:420px){.twoslots{grid-template-columns:1fr}}
+.slotsw{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;max-width:280px;margin:0 auto}
+.slotsw button{border:0;border-radius:9px;padding:8px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted)}
+.slotsw button[aria-pressed="true"].E{background:var(--early-bg);color:var(--early)}
+.slotsw button[aria-pressed="true"].L{background:var(--late-bg);color:var(--late)}
+.pt tr.wk td{background:var(--bg);font-family:var(--display);font-weight:600;letter-spacing:.04em;text-align:left;padding-top:12px}
+.pt tr.dfirst td{border-top:2px solid var(--line)}
+.pt td.dt{font-weight:600}
 </style>
 </head>
 <body>
@@ -251,7 +276,7 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
 </svg>
 
 <header class="top"><div class="in pad">
-  <div class="brand"><svg aria-hidden="true"><use href="#lifter"/></svg><div><b>STARS Manager</b><small>A400M · Engineering · A Shift</small></div></div>
+  <div class="brand"><svg aria-hidden="true"><use href="#lifter"/></svg><div><b>STARS Manager</b><small>A400M · Engineering · Shifts A–D</small></div></div>
   <button class="back" id="back" hidden>‹ Back</button>
 </div>
 <div class="locbar"><div class="in pad"><span class="lbl">Location</span>
@@ -265,12 +290,10 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
   <section class="view" id="v-shift" role="tabpanel">
     <p class="h1" id="hello"></p>
     <div class="hero" id="hero"></div>
-    <div class="sec">Minimum manning <small id="manNote"></small></div>
-    <div class="card man" id="man"></div>
-    <div class="sec">Needs chasing <small>most overdue first</small></div>
+    <div class="sec">Today's manning <small id="manNote"></small></div>
+    <div class="card" id="man"></div>
+    <div class="sec">Needs chasing <small id="chaseNote"></small></div>
     <div class="card plist" id="chase"></div>
-    <div class="sec">Expiring in 30 days</div>
-    <div class="card plist" id="soon"></div>
   </section>
 
   <section class="view" id="v-manning" role="tabpanel" hidden>
@@ -283,11 +306,11 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
     </div>
     <div class="statgrid three" id="mSummary"></div>
     <div id="mDays" style="display:flex;flex-direction:column;gap:12px"></div>
-    <p class="foot">Minimums are set separately for Line and CAS Bay.<br>Away reasons show work commitments only. Anything personal shows as “Unavailable”.</p>
+    <p class="foot">Every day has an Early and a Late team. A and C work the same blocks, B and D cover the stand-down.<br>Away reasons show work commitments only. Anything personal shows as “Unavailable”.</p>
   </section>
 
   <section class="view" id="v-planning" role="tabpanel" hidden>
-    <p class="h1">CAS Bay capacity<span>Engineers available each shift, for production planning</span></p>
+    <p class="h1">CAS Bay capacity<span>Engineers available 7 days a week, Earlies and Lates</span></p>
     <div class="card minset">
       <div class="minrow" style="border-bottom:0"><span><b style="font-size:1.1rem">Productive hours</b><small>per person, per shift</small></span><span class="step"><button id="hrsDown" aria-label="Fewer productive hours">−</button><output id="hrs"></output><button id="hrsUp" aria-label="More productive hours">+</button></span></div>
     </div>
@@ -301,6 +324,7 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
   <section class="view" id="v-people" role="tabpanel" hidden>
     <div class="tools">
       <label class="card search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="pq" type="search" placeholder="Search name or qual" aria-label="Search people"></label>
+      <div class="teamseg" role="group" aria-label="Shift team" id="teams"></div>
       <div class="chips" role="group" aria-label="Employee type" id="chips"></div>
       <div class="sortrow"><span id="pcount"></span><label>Sort <select id="psort"><option value="risk">Needs action</option><option value="rank">Rank</option><option value="name">Name</option></select></label></div>
     </div>
@@ -310,6 +334,8 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
   <section class="view" id="v-stats" role="tabpanel" hidden>
     <p class="h1">Readiness<span id="statDate"></span></p>
     <div class="statgrid" id="statTiles"></div>
+    <div class="sec">Readiness by shift</div>
+    <div class="card man" id="byTeam" style="padding:14px 16px"></div>
     <div class="sec">Readiness by rank</div>
     <div class="card man" id="byRank" style="padding:14px 16px"></div>
     <div class="sec">Compliance by qual <small>worst first</small></div>
@@ -324,7 +350,7 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
 <div class="toast" id="toast" hidden></div>
 
 <nav class="tabbar" role="tablist"><div class="in">
-  <button id="t-shift" role="tab" aria-selected="true" data-go="shift"><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3l3 9-3 9-3-9z"/></svg>Shift</button>
+  <button id="t-shift" role="tab" aria-selected="true" data-go="shift"><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3l3 9-3 9-3-9z"/></svg>Today</button>
   <button id="t-manning" role="tab" aria-selected="false" data-go="manning"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>Manning</button>
   <button id="t-planning" role="tab" aria-selected="false" data-go="planning"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16V9M10 16V5M14 16v-6M18 16V8"/></svg>Planning</button>
   <button id="t-people" role="tab" aria-selected="false" data-go="people"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.5c2.6 0 4.4 1.6 5 4.5"/></svg>People</button>
@@ -347,13 +373,31 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const NAME={E:"Early",L:"Late",A:"Away"},TIME={E:"06:00 – 18:00",L:"18:00 – 06:00"};
 const LOCNAME={Line:"Line",CAS:"CAS Bay"};
+const OPP={E:"L",L:"E"};
 
-/* ---------- roster (A Shift pattern) ---------- */
-const SHIFTS=[["L","2026-10-16","2026-10-20"],["E","2026-10-26","2026-10-29"],["L","2026-11-04","2026-11-08"],["E","2026-11-13","2026-11-17"],["L","2026-11-23","2026-11-26"],["E","2026-12-02","2026-12-06"],["L","2026-12-11","2026-12-15"],["E","2026-12-21","2026-12-24"],["L","2026-12-30","2027-01-03"],["E","2027-01-08","2027-01-12"]];
-const shiftOn={};SHIFTS.forEach(([t,a,b])=>{for(let d=D(a);d<=D(b);d=addD(d,1))shiftOn[iso(d)]=t});
-const SHIFT_DAYS=Object.keys(shiftOn).sort();
+/* ---------- four-shift roster ----------
+   A Shift's blocks come from STARS. C works the same days on the opposite shift.
+   B and D cover every stand-down gap between A/C blocks, one on Earlies and one on Lates, swapping each gap. */
+const A_BLOCKS=[["L","2026-10-16","2026-10-20"],["E","2026-10-26","2026-10-29"],["L","2026-11-04","2026-11-08"],["E","2026-11-13","2026-11-17"],["L","2026-11-23","2026-11-26"],["E","2026-12-02","2026-12-06"],["L","2026-12-11","2026-12-15"],["E","2026-12-21","2026-12-24"],["L","2026-12-30","2027-01-03"],["E","2027-01-08","2027-01-12"]];
+const ROSTER={}; // iso -> {E:team, L:team}
+const BLOCKS=[]; // {team pair, E team, L team, from, to}
+A_BLOCKS.forEach(([t,a,b],i)=>{
+  const E=t==="E"?"A":"C",L=t==="L"?"A":"C";
+  BLOCKS.push({E,L,from:a,to:b});
+  for(let d=D(a);d<=D(b);d=addD(d,1))ROSTER[iso(d)]={E,L};
+  const nx=A_BLOCKS[i+1];
+  if(nx){const ga=addD(D(b),1),gb=addD(D(nx[1]),-1);if(ga<=gb){
+    const E2=i%2===0?"B":"D",L2=i%2===0?"D":"B";
+    BLOCKS.push({E:E2,L:L2,from:iso(ga),to:iso(gb)});
+    for(let d=ga;d<=gb;d=addD(d,1))ROSTER[iso(d)]={E:E2,L:L2};
+  }}
+});
+BLOCKS.sort((x,y)=>x.from.localeCompare(y.from));
+const DAYS=Object.keys(ROSTER).sort();
+const teamShift=(team,d)=>{const r=ROSTER[iso(d)];return !r?"":r.E===team?"E":r.L===team?"L":""};
+const slotNow=()=>{const h=now.getHours();return h>=6&&h<18?"E":"L"};
 
-/* ---------- quals (training + authorisations only) ---------- */
+/* ---------- quals ---------- */
 const C="Currency",A="Eng auth";
 const QUALS=[
  [C,"WHT",6],[C,"Stn Explosive Awareness",12],[C,"General Security Awareness",12],[C,"GSR ARTS Test",12],[C,"IRT Mod 1",12],[C,"IRT Mod 2",12],
@@ -368,29 +412,30 @@ const QUALS=[
  [A,"Air Start Trolley",60],[A,"Hyd Serv Trolley",60],[A,"N2 and O2 Trolley",60]
 ];
 
-/* ---------- fictional personnel ---------- */
-const SURN=["Ashby","Barlow","Carver","Dalton","Ellis","Fenwick","Garside","Holden","Ingram","Jarvis","Kerr","Lowe","Marsh","Norris","Oakley","Pryce","Quinn","Rhodes","Slater","Tate","Underwood","Vance","Walsh","Yates","Ainsworth","Bevan","Crane","Doyle","Eastwood","Finch","Gale","Hurst","Irwin","Jessop","Kemp","Lister","Mercer","Nash","Orton","Pike","Rowe","Shaw","Thorne","Upton","Voss","Wade"];
+/* ---------- fictional personnel: 4 teams × 2 locations ---------- */
+const SURN=["Ashby","Barlow","Carver","Dalton","Ellis","Fenwick","Garside","Holden","Ingram","Jarvis","Kerr","Lowe","Marsh","Norris","Oakley","Pryce","Quinn","Rhodes","Slater","Tate","Underwood","Vance","Walsh","Yates","Ainsworth","Bevan","Crane","Doyle","Eastwood","Finch","Gale","Hurst","Irwin","Jessop","Kemp","Lister","Mercer","Nash","Orton","Pike","Rowe","Shaw","Thorne","Upton","Voss","Wade","Abbott","Bishop","Chapman","Dixon","Fisher","Gibson","Hammond","Jennings","Knight","Lambert","Newman","Osborne","Parker","Sutton","Turner","Vaughan","Webb","Archer","Blake","Cooper","Drake","Eden","Foster","Grant","Hale","Kane","Lane","Mills","North","Page","Reed","Stone","Talbot","Wells","Benson","Cole","Dunn","Frost","Hart","Payne","Rigby","Sharp"];
 const TYPES=["B1","B2","A+ Cert","A-Cert","Mech"];
 const TYPE_DESC={"B1":"Licensed engineer · mechanical","B2":"Licensed engineer · avionics","A+ Cert":"Certifying technician (A+)","A-Cert":"Certifying technician (A)","Mech":"Mechanic"};
 const TYPE_ORDER={"B1":0,"B2":1,"A+ Cert":2,"A-Cert":3,"Mech":4};
-// [rank, count at Line, count at CAS Bay, types]
-const RANKS=[["Chf Tech",1,1,["B1","B2"]],["Sgt",3,3,["B1","B2"]],["Cpl",7,6,["B1","B2"]],["AS1(T)",5,5,["A+ Cert","A-Cert","A-Cert"]],["AS1",5,5,["A-Cert","Mech","Mech"]]];
-const RANK_ORDER=RANKS.map(r=>r[0]);
+const TEAMS=["A","B","C","D"];
+// per team, per location: [rank, count, types]
+const MIX=[["Chf Tech",1,["B1","B2"]],["Sgt",2,["B1","B2"]],["Cpl",5,["B1","B2","B1","B2"]],["AS1(T)",4,["A+ Cert","A-Cert","A-Cert"]],["AS1",4,["A-Cert","Mech","Mech"]]];
+const RANK_ORDER=MIX.map(r=>r[0]);
 const MGROUP=t=>t==="B1"?"B1":t==="B2"?"B2":"A";
 const MLABEL={B1:"B1",B2:"B2",A:"A-Cert"};
 const MDEFAULT={Line:{B1:2,B2:1,A:3},CAS:{B1:2,B2:1,A:3}};
 let MIN=store.get("stars-min-loc",null)||JSON.parse(JSON.stringify(MDEFAULT));
 const CLOSE=1;
 let HRS=store.get("stars-hrs",9);
-let LOC=store.get("stars-loc","Line");
+let LOC=store.get("stars-loc","Line");if(!LOCNAME[LOC])LOC="Line";
 
 const PEOPLE=[];let si=0;
-RANKS.forEach(([rank,nLine,nCas,types])=>{[["Line",nLine],["CAS",nCas]].forEach(([loc,n])=>{for(let i=0;i<n;i++){
+TEAMS.forEach(team=>["Line","CAS"].forEach(loc=>MIX.forEach(([rank,n,types])=>{for(let i=0;i<n;i++){
   const type=pick(types);
-  const p={id:"p"+si,surname:SURN[si++],init:String.fromCharCode(65+Math.floor(rnd()*26)),rank,type,loc,quals:[],awayDays:{}};
-  SHIFTS.forEach(([,a,b])=>{
-    if(rnd()<.2){const why=pick(["Course","Detachment","Exercise","Unavailable"]);for(let d=D(a);d<=D(b);d=addD(d,1))p.awayDays[iso(d)]=why}
-    else for(let d=D(a);d<=D(b);d=addD(d,1))if(rnd()<.12)p.awayDays[iso(d)]=pick(["Duty","Unavailable"]);
+  const p={id:"p"+si,surname:SURN[si++%SURN.length],init:String.fromCharCode(65+Math.floor(rnd()*26)),rank,type,loc,team,quals:[],awayDays:{}};
+  BLOCKS.filter(b=>b.E===team||b.L===team).forEach(b=>{
+    if(rnd()<.14){const why=pick(["Course","Detachment","Exercise","Unavailable"]);for(let d=D(b.from);d<=D(b.to);d=addD(d,1))p.awayDays[iso(d)]=why}
+    else for(let d=D(b.from);d<=D(b.to);d=addD(d,1))if(rnd()<.08)p.awayDays[iso(d)]=pick(["Duty","Unavailable"]);
   });
   QUALS.forEach(([qt,name,months,only])=>{
     if(only&&!only.includes(type))return;
@@ -399,7 +444,7 @@ RANKS.forEach(([rank,nLine,nCas,types])=>{[["Line",nLine],["CAS",nCas]].forEach(
     p.quals.push({type:qt,name,months,exp,done:exp?addM(exp,-months):null,gap:rnd()<.03});
   });
   PEOPLE.push(p);
-}})});
+}})));
 function st(q){
   if(!q.exp)return{k:"bad",label:"No date",n:-99999};
   const n=diff(q.exp);
@@ -412,105 +457,110 @@ PEOPLE.forEach(p=>{p.quals.forEach(q=>q.s=st(q));p.quals.sort((a,b)=>a.s.n-b.s.n
   p.pct=Math.round(100*(p.quals.length-p.bad)/p.quals.length);p.display=`${p.rank} ${p.surname} ${p.init}`});
 
 const at=loc=>PEOPLE.filter(p=>p.loc===loc);
-const statusOn=(p,d)=>{const k=iso(d);if(shiftOn[k]&&p.awayDays[k])return"A";return shiftOn[k]||""};
+const statusOn=(p,d)=>{const s=teamShift(p.team,d);if(s&&p.awayDays[iso(d)])return"A";return s};
 const awayWhy=(p,d)=>p.awayDays[iso(d)]||"";
 const rankIdx=p=>RANK_ORDER.indexOf(p.rank);
 const initials=p=>p.surname[0]+p.init;
-function manningOn(d,loc=LOC){
-  const t=shiftOn[iso(d)];if(!t)return null;
+const tl=t=>`<span class="tl" title="${t} Shift">${t}</span>`;
+function manningOn(d,loc,slot){
+  const r=ROSTER[iso(d)];if(!r)return null;
+  const team=r[slot],ppl=at(loc).filter(p=>p.team===team);
   const g={};let worst="ok";const byType={};TYPES.forEach(x=>byType[x]=0);
   ["B1","B2","A"].forEach(k=>{
-    const all=at(loc).filter(p=>MGROUP(p.type)===k),on=all.filter(p=>statusOn(p,d)===t),away=all.filter(p=>statusOn(p,d)==="A");
+    const all=ppl.filter(p=>MGROUP(p.type)===k),on=all.filter(p=>statusOn(p,d)===slot),away=all.filter(p=>statusOn(p,d)==="A");
     on.forEach(p=>byType[p.type]++);
     const n=on.length,m=MIN[loc][k],s=n<m?"bad":n<=m+CLOSE?"warn":"ok";
     g[k]={n,m,s,on,away,total:all.length};
     if(s==="bad"||(s==="warn"&&worst==="ok"))worst=s;
   });
-  return{t,g,worst,byType,total:g.B1.n+g.B2.n+g.A.n};
+  return{slot,team,g,worst,byType,total:g.B1.n+g.B2.n+g.A.n,away:ppl.filter(p=>statusOn(p,d)==="A")};
 }
 const WORD={bad:"Below minimum",warn:"Close to minimum",ok:"Manned"};
 function cell(k,x){return `<span class="mc ${x.s}" title="${MLABEL[k]}: ${x.n} on, minimum ${x.m}"><small>${MLABEL[k]}</small><b>${x.n}</b><i>min ${x.m}</i></span>`}
 function personRow(p,extra){
   const s=statusOn(p,today);
   const pill=extra??(p.bad?`<span class="pill bad">${p.bad} overdue</span>`:p.warn?`<span class="pill warn">${p.warn} due</span>`:`<span class="pill ok">All in date</span>`);
-  return `<button class="prow" data-p="${p.id}"><span class="av${s==="A"?" away":""}">${initials(p)}</span><span class="n">${esc(p.display)}<small>${p.type}${s==="A"?" · "+awayWhy(p,today):""} · ${p.pct}% in date</small></span>${pill}</button>`;
+  return `<button class="prow" data-p="${p.id}"><span class="av${s==="A"?" away":""}">${initials(p)}</span><span class="n">${esc(p.display)}<small>${p.team} Shift · ${p.type}${s==="A"?" · "+awayWhy(p,today):""} · ${p.pct}% in date</small></span>${pill}</button>`;
 }
 function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,1800)}
 
-/* ---------- SHIFT ---------- */
-function shownDay(){let d=today;if(!shiftOn[iso(d)])for(let i=1;i<60;i++){const x=addD(today,i);if(shiftOn[iso(x)]){d=x;break}}return d}
+/* ---------- TODAY ---------- */
 function renderShift(){
   const h=now.getHours();
   $("hello").innerHTML=`${h<12?"Morning":h<18?"Afternoon":"Evening"}, boss<span>${fmt(today,{weekday:"long",day:"numeric",month:"long"})} · ${LOCNAME[LOC]}</span>`;
-  const d=shownDay(),t=shiftOn[iso(d)],ppl=at(LOC);
-  const on=ppl.filter(p=>statusOn(p,d)===t),away=ppl.filter(p=>statusOn(p,d)==="A");
-  const allQ=ppl.flatMap(p=>p.quals),inDate=Math.round(100*allQ.filter(q=>q.s.k!=="bad").length/allQ.length);
-  const authOK=on.filter(p=>!p.quals.some(q=>q.name==="Auth to Work"&&q.s.k==="bad")).length;
-  const rel=diff(d)===0?"Today":diff(d)===1?"Tomorrow":`In ${diff(d)} days`;
+  // current slot: before 06:00 it's still yesterday's Late
+  let d=today,slot=slotNow();if(h<6)d=addD(today,-1);
+  if(!ROSTER[iso(d)]){d=today;slot="E"}
+  const m=manningOn(d,LOC,slot);
+  const ppl=at(LOC).filter(p=>p.team===m.team),allQ=ppl.flatMap(p=>p.quals);
+  const inDate=Math.round(100*allQ.filter(q=>q.s.k!=="bad").length/allQ.length);
+  const onP=[...m.g.B1.on,...m.g.B2.on,...m.g.A.on];
+  const authOK=onP.filter(p=>!p.quals.some(q=>q.name==="Auth to Work"&&q.s.k==="bad")).length;
   $("hero").innerHTML=`<svg class="plane" aria-hidden="true"><use href="#lifter"/></svg><div class="chev"></div>
-    <span class="tag"><i></i>${rel} · ${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</span>
-    <h2>${NAME[t]} shift</h2><div class="t">${TIME[t]} · ${LOCNAME[LOC]}</div>
-    <div class="kpis"><div><b>${on.length}</b><small>On shift</small></div><div><b>${away.length}</b><small>Away</small></div><div><b>${authOK}</b><small>Auth to Work OK</small></div><div><b>${inDate}%</b><small>Quals in date</small></div></div>`;
-  const m=manningOn(d);
-  $("manNote").textContent=`${LOCNAME[LOC]} · ${fmt(d,{weekday:"short",day:"numeric",month:"short"})}`;
-  let np=null;for(let i=0;i<120&&!np;i++){const x=addD(today,i),mm=manningOn(x);if(mm&&mm.worst!=="ok"&&+x!==+d)np=x}
-  const short=k=>m.g[k].s==="bad"?`${m.g[k].m-m.g[k].n} short`:m.g[k].n===m.g[k].m?"at min":"1 above";
-  $("man").innerHTML=`<div class="mcells big">${["B1","B2","A"].map(k=>cell(k,m.g[k])).join("")}</div>
-    <div class="mstatus ${m.worst}"><b>${WORD[m.worst]}</b>${m.worst!=="ok"?" · "+["B1","B2","A"].filter(k=>m.g[k].s!=="ok").map(k=>`${MLABEL[k]} ${short(k)}`).join(", "):""}</div>
-    <div class="mlinks"><button class="btn" data-day="${iso(d)}">See who's working ›</button>${np?`<button class="more" data-day="${iso(np)}">Next issue: ${fmt(np,{weekday:"short",day:"numeric",month:"short"})} ›</button>`:`<button class="more" data-go="manning">Every shift day ›</button>`}</div>`;
-  const chase=ppl.filter(p=>p.bad).sort((a,b)=>b.bad-a.bad||a.pct-b.pct).slice(0,6);
+    <span class="tag"><i></i>On now · ${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</span>
+    <h2>${m.team} Shift · ${NAME[slot]}</h2><div class="t">${TIME[slot]} · ${LOCNAME[LOC]}</div>
+    <div class="kpis"><div><b>${m.total}</b><small>On shift</small></div><div><b>${m.away.length}</b><small>Away</small></div><div><b>${authOK}</b><small>Auth to Work OK</small></div><div><b>${inDate}%</b><small>Quals in date</small></div></div>`;
+  $("manNote").textContent=`${LOCNAME[LOC]} · ${fmt(today,{weekday:"short",day:"numeric",month:"short"})}`;
+  const r=ROSTER[iso(today)];
+  $("man").innerHTML=r?`<div class="twoslots">${["E","L"].map(s=>{const mm=manningOn(today,LOC,s);return `<button class="card slotcard" data-day="${iso(today)}" data-slot="${s}" style="cursor:pointer;text-align:left;font:inherit;color:inherit">
+      <h4><span><span class="pill ${s}">${NAME[s]}</span></span>${tl(mm.team)}</h4>
+      <span class="mcells">${["B1","B2","A"].map(k=>cell(k,mm.g[k])).join("")}</span>
+      <span class="mstatus ${mm.worst}" style="margin:0;font-size:.85rem"><b>${WORD[mm.worst]}</b> · ${mm.total} on</span></button>`}).join("")}</div>
+      <div class="mlinks" style="padding-top:0"><span style="color:var(--muted);font-size:.85rem">Tap a shift to see who's working</span><button class="more" data-go="manning">Every day ›</button></div>`:`<div class="empty">No roster loaded for today.</div>`;
+  $("chaseNote").textContent=`${LOCNAME[LOC]} · all shifts`;
+  const chase=at(LOC).filter(p=>p.bad).sort((a,b)=>b.bad-a.bad||a.pct-b.pct).slice(0,6);
   $("chase").innerHTML=chase.length?chase.map(p=>personRow(p)).join(""):`<div class="empty">Nobody overdue.</div>`;
-  const soon=ppl.flatMap(p=>p.quals.filter(q=>q.s.k==="warn"&&q.s.n<=30).map(q=>({p,q}))).sort((a,b)=>a.q.s.n-b.q.s.n).slice(0,6);
-  $("soon").innerHTML=soon.length?soon.map(({p,q})=>personRow(p,`<span class="pill warn">${esc(q.name)} · ${q.s.n}d</span>`)).join(""):`<div class="empty">Nothing expiring in the next 30 days.</div>`;
 }
 
-/* ---------- MANNING ---------- */
+/* ---------- MANNING: 7 days, Early + Late ---------- */
+function weekStart(d){return addD(d,-((d.getDay()+6)%7))}
 function renderManning(){
-  $("manSub").textContent=`${LOCNAME[LOC]} · every shift day checked against its minimums`;
+  $("manSub").textContent=`${LOCNAME[LOC]} · every Early and Late, 7 days a week`;
   ["B1","B2","A"].forEach(k=>$("min-"+k).textContent=MIN[LOC][k]);
-  const res=SHIFT_DAYS.filter(k=>D(k)>=today).map(k=>({d:D(k),m:manningOn(D(k))}));
-  const c={bad:0,warn:0,ok:0};res.forEach(r=>c[r.m.worst]++);
-  $("mSummary").innerHTML=[["bad","days below"],["warn","days close"],["ok","days manned"]].map(([k,l])=>`<div class="card stat"><b style="color:var(--${k})">${c[k]}</b><small>${l}</small></div>`).join("");
-  let html="";
-  SHIFTS.forEach(([t,a,b])=>{
-    const rs=res.filter(r=>r.d>=D(a)&&r.d<=D(b));if(!rs.length)return;
-    const nIss=rs.filter(r=>r.m.worst!=="ok").length,w=rs.some(r=>r.m.worst==="bad")?"bad":nIss?"warn":"ok";
-    html+=`<div class="sec"><span><span class="pill ${t}" style="margin-right:8px">${NAME[t]}</span>${fmt(a,{day:"numeric",month:"short"})} – ${fmt(b,{day:"numeric",month:"short"})}</span><small style="color:var(--${w})">${nIss?nIss+" day"+(nIss>1?"s":"")+" to watch":"all manned"}</small></div><div class="card">`+
-    rs.map(({d,m})=>`<button class="mday ${m.worst}" data-day="${iso(d)}" aria-label="${fmt(d,{weekday:"long",day:"numeric",month:"long"})}: ${WORD[m.worst]}"><span class="dd"><b>${fmt(d,{weekday:"short"})} ${d.getDate()}</b><small>${+d===+today?"Today":fmt(d,{month:"short"})}</small></span><span class="mcells">${["B1","B2","A"].map(k=>cell(k,m.g[k])).join("")}</span><span class="go">›</span></button>`).join("")+`</div>`;
-  });
-  $("mDays").innerHTML=html;
+  const days=DAYS.filter(k=>D(k)>=today);
+  const c={bad:0,warn:0,ok:0};
+  days.forEach(k=>["E","L"].forEach(s=>c[manningOn(D(k),LOC,s).worst]++));
+  $("mSummary").innerHTML=[["bad","shifts below"],["warn","shifts close"],["ok","shifts manned"]].map(([k,l])=>`<div class="card stat"><b style="color:var(--${k})">${c[k]}</b><small>${l}</small></div>`).join("");
+  const weeks={};days.forEach(k=>{const w=iso(weekStart(D(k)));(weeks[w]=weeks[w]||[]).push(k)});
+  $("mDays").innerHTML=Object.entries(weeks).map(([w,ks])=>{
+    const iss=ks.reduce((n,k)=>n+["E","L"].filter(s=>manningOn(D(k),LOC,s).worst!=="ok").length,0);
+    const bad=ks.some(k=>["E","L"].some(s=>manningOn(D(k),LOC,s).worst==="bad"));
+    return `<div class="sec"><span>Week of ${fmt(w,{day:"numeric",month:"short"})}</span><small style="color:var(--${bad?"bad":iss?"warn":"ok"})">${iss?iss+" shift"+(iss>1?"s":"")+" to watch":"all manned"}</small></div><div class="card">`+
+      ks.map(k=>{const d=D(k);return `<div class="dayrow"><div class="dh"><b>${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</b><small>${+d===+today?"Today":""}</small></div>`+
+        ["E","L"].map(s=>{const m=manningOn(d,LOC,s);return `<button class="slot ${m.worst}" data-day="${k}" data-slot="${s}" aria-label="${fmt(d,{weekday:"long",day:"numeric",month:"long"})} ${NAME[s]}, ${m.team} Shift: ${WORD[m.worst]}"><span class="sl"><span class="pill ${s}">${s}</span>${tl(m.team)}</span><span class="mcells">${["B1","B2","A"].map(g=>cell(g,m.g[g])).join("")}</span><span class="go">›</span></button>`}).join("")+`</div>`}).join("")+`</div>`}).join("");
 }
 
-/* ---------- PLANNING (CAS Bay feed) ---------- */
-function planRows(){return SHIFT_DAYS.filter(k=>D(k)>=today).map(k=>({k,d:D(k),m:manningOn(D(k),"CAS")}))}
+/* ---------- PLANNING (CAS Bay, 7 days, E + L) ---------- */
+function planRows(){const out=[];DAYS.filter(k=>D(k)>=today).forEach(k=>["E","L"].forEach(s=>out.push({k,d:D(k),s,m:manningOn(D(k),"CAS",s)})));return out}
 function renderPlanning(){
   $("hrs").textContent=HRS.toFixed(1);
   const rows=planRows();
-  const next7=rows.slice(0,7);
-  const hrs7=next7.reduce((s,r)=>s+r.m.total*HRS,0);
-  const avg=rows.length?(rows.reduce((s,r)=>s+r.m.total,0)/rows.length):0;
+  const wk=rows.filter(r=>diff(r.d)<7);
+  const hrs7=wk.reduce((s,r)=>s+r.m.total*HRS,0);
+  const avgE=rows.filter(r=>r.s==="E"),avgL=rows.filter(r=>r.s==="L");
+  const avg=a=>a.length?(a.reduce((s,r)=>s+r.m.total,0)/a.length).toFixed(1):"0";
   const below=rows.filter(r=>r.m.worst==="bad").length;
-  $("pSummary").innerHTML=[[Math.round(hrs7).toLocaleString("en-GB"),"man-hours, next 7 shifts"],[avg.toFixed(1),"engineers per shift (avg)"],[below,"shifts below minimum"]].map(([b,l],i)=>`<div class="card stat"><b${i===2&&below?' style="color:var(--bad)"':""}>${b}</b><small>${l}</small></div>`).join("");
-  let h=`<thead><tr><th>Date</th><th>Shift</th>${TYPES.map(t=>`<th>${t}</th>`).join("")}<th>Total</th><th>Man-hrs</th><th>Min</th></tr></thead><tbody>`;
-  SHIFTS.forEach(([t,a,b])=>{
-    const rs=rows.filter(r=>r.d>=D(a)&&r.d<=D(b));if(!rs.length)return;
-    h+=`<tr class="blk"><td colspan="${TYPES.length+5}">${NAME[t]} block · ${fmt(a,{day:"numeric",month:"short"})} – ${fmt(b,{day:"numeric",month:"short"})}</td></tr>`;
-    rs.forEach(({k,d,m})=>{h+=`<tr data-day="${k}"><td>${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</td><td><span class="pill ${m.t}">${m.t}</span></td>${TYPES.map(t=>`<td>${m.byType[t]}</td>`).join("")}<td class="tot">${m.total}</td><td class="hrs">${(m.total*HRS).toFixed(0)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
+  $("pSummary").innerHTML=[[Math.round(hrs7).toLocaleString("en-GB"),"man-hours, next 7 days"],[`${avg(avgE)} / ${avg(avgL)}`,"avg engineers Early / Late"],[below,"shifts below minimum"]].map(([b,l],i)=>`<div class="card stat"><b${i===2&&below?' style="color:var(--bad)"':""}>${b}</b><small>${l}</small></div>`).join("");
+  let h=`<thead><tr><th>Date</th><th>Shift</th><th>Team</th>${TYPES.map(t=>`<th>${t}</th>`).join("")}<th>Total</th><th>Man-hrs</th><th>Min</th></tr></thead><tbody>`;
+  const weeks={};rows.forEach(r=>{const w=iso(weekStart(r.d));(weeks[w]=weeks[w]||[]).push(r)});
+  Object.entries(weeks).forEach(([w,rs])=>{
+    h+=`<tr class="wk"><td colspan="${TYPES.length+6}">Week of ${fmt(w,{weekday:"short",day:"numeric",month:"short"})}</td></tr>`;
+    rs.forEach(({k,d,s,m})=>{h+=`<tr data-day="${k}" data-slot="${s}"${s==="E"?' class="dfirst"':""}><td class="dt">${s==="E"?fmt(d,{weekday:"short",day:"numeric",month:"short"}):""}</td><td><span class="pill ${s}">${NAME[s]}</span></td><td>${tl(m.team)}</td>${TYPES.map(t=>`<td>${m.byType[t]}</td>`).join("")}<td class="tot">${m.total}</td><td class="hrs">${(m.total*HRS).toFixed(0)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
     const sum=rs.reduce((s,r)=>s+r.m.total,0);
-    h+=`<tr class="sub"><td>Block total</td><td></td>${TYPES.map(t=>`<td>${rs.reduce((s,r)=>s+r.m.byType[t],0)}</td>`).join("")}<td class="tot">${sum}</td><td class="hrs">${(sum*HRS).toFixed(0)}</td><td></td></tr>`;
+    h+=`<tr class="sub"><td>Week total</td><td></td><td></td>${TYPES.map(t=>`<td>${rs.reduce((s,r)=>s+r.m.byType[t],0)}</td>`).join("")}<td class="tot">${sum}</td><td class="hrs">${(sum*HRS).toFixed(0)}</td><td></td></tr>`;
   });
   $("ptable").innerHTML=h+"</tbody>";
 }
 function tsv(){
-  const head=["Date","Shift",...TYPES,"Total","Man-hours","Status"];
-  return [head.join("\t"),...planRows().map(({d,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),NAME[m.t],...TYPES.map(t=>m.byType[t]),m.total,(m.total*HRS).toFixed(1),WORD[m.worst]].join("\t"))].join("\n");
+  const head=["Date","Day","Shift","Team",...TYPES,"Total","Man-hours","Status"];
+  return [head.join("\t"),...planRows().map(({d,s,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),fmt(d,{weekday:"short"}),NAME[s],m.team,...TYPES.map(t=>m.byType[t]),m.total,(m.total*HRS).toFixed(1),WORD[m.worst]].join("\t"))].join("\n");
 }
 function message(){
-  const rows=planRows();
-  let out=`CAS Bay engineer availability (A Shift) — ${HRS.toFixed(1)} productive hrs per person per shift\n`;
-  SHIFTS.forEach(([t,a,b])=>{const rs=rows.filter(r=>r.d>=D(a)&&r.d<=D(b));if(!rs.length)return;
-    out+=`\n${NAME[t]}s ${fmt(a,{day:"numeric",month:"short"})}–${fmt(b,{day:"numeric",month:"short"})}:\n`;
-    rs.forEach(({d,m})=>{out+=`  ${fmt(d,{weekday:"short",day:"numeric",month:"short"})}: ${m.total} engineers (B1 ${m.byType["B1"]}, B2 ${m.byType["B2"]}, A+ ${m.byType["A+ Cert"]}, A ${m.byType["A-Cert"]}, Mech ${m.byType["Mech"]}) = ${(m.total*HRS).toFixed(0)} man-hrs${m.worst==="bad"?" — BELOW MINIMUM":""}\n`})});
+  const rows=planRows().filter(r=>diff(r.d)<14);
+  let out=`CAS Bay engineer availability, next 14 days (${HRS.toFixed(1)} productive hrs per person per shift)\n`;
+  let last="";
+  rows.forEach(({k,d,s,m})=>{if(k!==last){out+=`\n${fmt(d,{weekday:"short",day:"numeric",month:"short"})}\n`;last=k}
+    out+=`  ${NAME[s]} (${m.team} Shift): ${m.total} engineers — B1 ${m.byType["B1"]}, B2 ${m.byType["B2"]}, A+ ${m.byType["A+ Cert"]}, A ${m.byType["A-Cert"]}, Mech ${m.byType["Mech"]} = ${(m.total*HRS).toFixed(0)} man-hrs${m.worst==="bad"?" — BELOW MINIMUM":""}\n`});
   return out;
 }
 async function copy(text,label){
@@ -519,27 +569,30 @@ async function copy(text,label){
 }
 
 /* ---------- PEOPLE ---------- */
-let trade="all",pq="",psort="risk";
+let trade="all",teamF="all",pq="",psort="risk";
 function renderPeople(){
   const ppl=at(LOC);
-  $("chips").innerHTML=["all",...TYPES].map(t=>`<button data-t="${t}" aria-pressed="${t===trade}">${t==="all"?"All":t}<span>${t==="all"?ppl.length:ppl.filter(p=>p.type===t).length}</span></button>`).join("");
+  $("teams").innerHTML=["all",...TEAMS].map(t=>`<button data-team="${t}" aria-pressed="${t===teamF}">${t==="all"?"All":t+" Shift"}</button>`).join("");
+  const inTeam=ppl.filter(p=>teamF==="all"||p.team===teamF);
+  $("chips").innerHTML=["all",...TYPES].map(t=>`<button data-t="${t}" aria-pressed="${t===trade}">${t==="all"?"All":t}<span>${t==="all"?inTeam.length:inTeam.filter(p=>p.type===t).length}</span></button>`).join("");
   const q=pq.trim().toLowerCase();
-  const list=ppl.filter(p=>(trade==="all"||p.type===trade)&&(!q||p.display.toLowerCase().includes(q)||p.quals.some(x=>x.s.k!=="ok"&&x.name.toLowerCase().includes(q))));
+  const list=inTeam.filter(p=>(trade==="all"||p.type===trade)&&(!q||p.display.toLowerCase().includes(q)||p.quals.some(x=>x.s.k!=="ok"&&x.name.toLowerCase().includes(q))));
   list.sort(psort==="name"?(a,b)=>a.surname.localeCompare(b.surname):psort==="rank"?(a,b)=>rankIdx(a)-rankIdx(b)||a.surname.localeCompare(b.surname):(a,b)=>b.bad-a.bad||b.warn-a.warn||a.surname.localeCompare(b.surname));
   $("pcount").textContent=`${list.length} people · ${LOCNAME[LOC]}`;
-  $("people").innerHTML=list.length?list.map(p=>personRow(p)).join(""):`<div class="empty">No one matches “${esc(pq)}”.</div>`;
+  $("people").innerHTML=list.length?list.map(p=>personRow(p)).join(""):`<div class="empty">No one matches.</div>`;
 }
 
 /* ---------- READINESS ---------- */
 let showAll=false;
+function bar(label,q){const ok=q.filter(x=>x.s.k==="ok").length,w=q.filter(x=>x.s.k==="warn").length,b=q.filter(x=>x.s.k==="bad").length;
+  return `<div class="mrow"><span class="lbl">${label}</span><span class="track"><span style="flex:${ok};background:var(--ok)"></span><span style="flex:${w};background:var(--warn)"></span><span style="flex:${b};background:var(--bad)"></span></span><span class="v">${Math.round(100*(ok+w)/q.length)}%</span></div>`}
 function renderStats(){
   const ppl=at(LOC),allQ=ppl.flatMap(p=>p.quals);
   $("statDate").textContent=`${LOCNAME[LOC]} · ${ppl.length} personnel · as of ${fmt(today)}`;
   const bad=allQ.filter(q=>q.s.k==="bad").length,warn=allQ.filter(q=>q.s.k==="warn").length,fully=ppl.filter(p=>!p.bad).length;
   $("statTiles").innerHTML=[[`${Math.round(100*(allQ.length-bad)/allQ.length)}%`,"of all quals in date"],[`${fully}/${ppl.length}`,"people fully in date"],[bad,"overdue or missing"],[warn,"due in 90 days"]].map(([b,s],i)=>`<div class="card stat"><b style="${i===2&&bad?"color:var(--bad)":i===3&&warn?"color:var(--warn)":""}">${b}</b><small>${s}</small></div>`).join("");
-  $("byRank").innerHTML=RANK_ORDER.map(r=>{const q=ppl.filter(p=>p.rank===r).flatMap(p=>p.quals);if(!q.length)return"";
-    const ok=q.filter(x=>x.s.k==="ok").length,w=q.filter(x=>x.s.k==="warn").length,b=q.filter(x=>x.s.k==="bad").length;
-    return `<div class="mrow"><span class="lbl">${r}</span><span class="track"><span style="flex:${ok};background:var(--ok)"></span><span style="flex:${w};background:var(--warn)"></span><span style="flex:${b};background:var(--bad)"></span></span><span class="v">${Math.round(100*(ok+w)/q.length)}%</span></div>`}).join("");
+  $("byTeam").innerHTML=TEAMS.map(t=>bar(t+" Shift",ppl.filter(p=>p.team===t).flatMap(p=>p.quals))).join("");
+  $("byRank").innerHTML=RANK_ORDER.map(r=>bar(r,ppl.filter(p=>p.rank===r).flatMap(p=>p.quals))).join("");
   const comp=QUALS.map(([type,name])=>{const q=ppl.flatMap(p=>p.quals.filter(x=>x.name===name));
     const ok=q.filter(x=>x.s.k==="ok").length,w=q.filter(x=>x.s.k==="warn").length,b=q.filter(x=>x.s.k==="bad").length;
     return{type,name,n:q.length,ok,w,b,pct:q.length?Math.round(100*(ok+w)/q.length):100}}).filter(c=>c.n).sort((a,b)=>a.pct-b.pct||b.b-a.b);
@@ -551,26 +604,26 @@ function renderStats(){
 }
 
 /* ---------- DAY drill-down ---------- */
-function renderDay(k,loc){
-  const d=D(k),m=manningOn(d,loc);
-  const i=SHIFT_DAYS.indexOf(k),prev=SHIFT_DAYS[i-1],next=SHIFT_DAYS[i+1];
+function renderDay(k,loc,slot){
+  const d=D(k),m=manningOn(d,loc,slot);
+  const i=DAYS.indexOf(k),prev=DAYS[i-1],next=DAYS[i+1];
   const rel=diff(d)===0?"Today":diff(d)===1?"Tomorrow":diff(d)>0?`In ${diff(d)} days`:`${-diff(d)} days ago`;
   const groups=["B1","B2","A"].map(g=>{const x=m.g[g];
     const on=[...x.on].sort((a,b)=>TYPE_ORDER[a.type]-TYPE_ORDER[b.type]||rankIdx(a)-rankIdx(b));
     const gap=x.n<x.m?`${x.m-x.n} short`:x.n===x.m?"at minimum":x.n<=x.m+CLOSE?`${x.n-x.m} above`:`${x.n-x.m} spare`;
     return `<div class="sec"><span>${MLABEL[g]}${g==="A"?" <small style='text-transform:none'>incl. A+ &amp; Mech</small>":""}</span><small style="color:var(--${x.s})">${x.n} on · min ${x.m} · ${gap}</small></div>
-      <div class="card plist">${on.length?on.map(p=>personRow(p,`<span class="pill ${m.t}">${p.type}</span>`)).join(""):`<div class="empty" style="color:var(--bad)">Nobody working</div>`}</div>`}).join("");
-  const away=at(loc).filter(p=>statusOn(p,d)==="A").sort((a,b)=>TYPE_ORDER[a.type]-TYPE_ORDER[b.type]);
+      <div class="card plist">${on.length?on.map(p=>personRow(p,`<span class="pill ${slot}">${p.type}</span>`)).join(""):`<div class="empty" style="color:var(--bad)">Nobody working</div>`}</div>`}).join("");
   $("v-sub").innerHTML=`
     <div class="dayhead">
-      <button class="dnav" ${prev?`data-day="${prev}"`:"disabled"} aria-label="Previous shift day">‹</button>
-      <div><p class="h1">${fmt(d,{weekday:"long",day:"numeric",month:"long"})}<span>${LOCNAME[loc]} · ${rel} · <span class="pill ${m.t}">${NAME[m.t]}</span> ${TIME[m.t]}</span></p></div>
-      <button class="dnav" ${next?`data-day="${next}"`:"disabled"} aria-label="Next shift day">›</button>
+      <button class="dnav" ${prev?`data-day="${prev}" data-slot="${slot}" data-loc="${loc}"`:"disabled"} aria-label="Previous day">‹</button>
+      <div><p class="h1">${fmt(d,{weekday:"long",day:"numeric",month:"long"})}<span>${LOCNAME[loc]} · ${rel}</span></p></div>
+      <button class="dnav" ${next?`data-day="${next}" data-slot="${slot}" data-loc="${loc}"`:"disabled"} aria-label="Next day">›</button>
     </div>
+    <div class="slotsw" role="group" aria-label="Shift">${["E","L"].map(s=>`<button class="${s}" data-day="${k}" data-slot="${s}" data-loc="${loc}" aria-pressed="${s===slot}">${NAME[s]} · ${ROSTER[k][s]}</button>`).join("")}</div>
     <div class="card"><div class="mcells big">${["B1","B2","A"].map(g=>cell(g,m.g[g])).join("")}</div>
-      <div class="mstatus ${m.worst}" style="margin-bottom:14px"><b>${WORD[m.worst]}</b> · ${m.total} working, ${away.length} away${loc==="CAS"?` · ${(m.total*HRS).toFixed(0)} man-hours`:""}</div></div>
+      <div class="mstatus ${m.worst}" style="margin-bottom:14px"><b>${WORD[m.worst]}</b> · ${m.team} Shift ${TIME[slot]} · ${m.total} working, ${m.away.length} away${loc==="CAS"?` · ${(m.total*HRS).toFixed(0)} man-hours`:""}</div></div>
     ${groups}
-    ${away.length?`<div class="sec"><span>Away</span><small>${away.length}</small></div><div class="card plist">${away.map(p=>personRow(p,`<span class="pill A">${awayWhy(p,d)}</span>`)).join("")}</div>`:""}`;
+    ${m.away.length?`<div class="sec"><span>Away</span><small>${m.away.length}</small></div><div class="card plist">${m.away.sort((a,b)=>TYPE_ORDER[a.type]-TYPE_ORDER[b.type]).map(p=>personRow(p,`<span class="pill A">${awayWhy(p,d)}</span>`)).join("")}</div>`:""}`;
 }
 
 /* ---------- PERSON drill-down ---------- */
@@ -578,18 +631,18 @@ function renderPerson(id){
   const p=PEOPLE.find(x=>x.id===id);
   const start=addD(today,-((today.getDay()+6)%7));
   let strip=["M","T","W","T","F","S","S"].map(d=>`<div class="dow">${d}</div>`).join("");
-  for(let i=0;i<28;i++){const d=addD(start,i),s=statusOn(p,d),k=iso(d),tag=shiftOn[k]?"button":"div";
-    strip+=`<${tag} class="d ${s}${+d===+today?" today":""}"${shiftOn[k]?` data-day="${k}" data-loc="${p.loc}"`:""} title="${fmt(d,{weekday:"long",day:"numeric",month:"short"})}: ${s==="A"?awayWhy(p,d):s?NAME[s]:"Off"}">${d.getDate()}<small>${s||"&nbsp;"}</small></${tag}>`}
+  for(let i=0;i<28;i++){const d=addD(start,i),s=statusOn(p,d),k=iso(d),sl=teamShift(p.team,d),tag=sl?"button":"div";
+    strip+=`<${tag} class="d ${s}${+d===+today?" today":""}"${sl?` data-day="${k}" data-slot="${sl}" data-loc="${p.loc}"`:""} title="${fmt(d,{weekday:"long",day:"numeric",month:"short"})}: ${s==="A"?awayWhy(p,d):s?NAME[s]:"Stand-down"}">${d.getDate()}<small>${s||"&nbsp;"}</small></${tag}>`}
   const awayList=Object.keys(p.awayDays).filter(k=>D(k)>=today).sort().slice(0,6);
   const grp=(k,title)=>{const g=p.quals.filter(q=>q.s.k===k);if(!g.length)return"";
     return `<div class="sec">${title} <small>${g.length}</small></div><div class="card">${g.map(q=>`<div class="qrow"><div class="n">${esc(q.name)}<small>${q.type}${q.exp?" · expires "+fmt(q.exp):" · no date recorded"}${q.gap?" · no evidence in folder":""}</small></div><span class="pill ${q.s.k}">${q.s.label}</span></div>`).join("")}</div>`};
   const ok=p.quals.length-p.bad-p.warn;
   $("v-sub").innerHTML=`
-    <div class="phead"><span class="av">${initials(p)}</span><div><h2>${esc(p.display)}</h2><p>${p.type} · ${TYPE_DESC[p.type]}<br>${LOCNAME[p.loc]} · A Shift</p></div></div>
+    <div class="phead"><span class="av">${initials(p)}</span><div><h2>${esc(p.display)}</h2><p>${p.type} · ${TYPE_DESC[p.type]}<br>${p.team} Shift · ${LOCNAME[p.loc]}</p></div></div>
     <div class="card ready"><div class="row1"><span class="big">${p.pct}%<small>in date</small></span>${p.bad?`<span class="pill bad">${p.bad} need action</span>`:`<span class="pill ok">All good</span>`}</div>
       <div class="bars"><span style="flex:${ok};background:var(--ok)"></span><span style="flex:${p.warn};background:var(--warn)"></span><span style="flex:${p.bad};background:var(--bad)"></span></div></div>
     <div class="sec">Next 4 weeks <small>tap a shift day</small></div><div class="card strip">${strip}</div>
-    ${awayList.length?`<div class="sec">Away on shift days</div><div class="card">${awayList.map(k=>`<button class="qrow" data-day="${k}" data-loc="${p.loc}"><div class="n">${fmt(k,{weekday:"short",day:"numeric",month:"short"})}<small>${NAME[shiftOn[k]]} shift</small></div><span class="pill A">${p.awayDays[k]}</span></button>`).join("")}</div>`:""}
+    ${awayList.length?`<div class="sec">Away on shift days</div><div class="card">${awayList.map(k=>`<button class="qrow" data-day="${k}" data-slot="${teamShift(p.team,D(k))}" data-loc="${p.loc}"><div class="n">${fmt(k,{weekday:"short",day:"numeric",month:"short"})}<small>${NAME[teamShift(p.team,D(k))]} shift</small></div><span class="pill A">${p.awayDays[k]}</span></button>`).join("")}</div>`:""}
     ${grp("bad","Overdue or missing")}${grp("warn","Due in 90 days")}${grp("ok","In date")}`;
 }
 
@@ -602,7 +655,7 @@ function render(s){
   TABS.forEach(t=>$("v-"+t).hidden=sub||t!==s.v);
   if(!sub)TABS.forEach(t=>$("t-"+t).setAttribute("aria-selected",t===s.v));
   $("v-sub").hidden=!sub;$("back").hidden=!sub;
-  if(s.k==="day")renderDay(s.d,s.loc);
+  if(s.k==="day")renderDay(s.d,s.loc,s.slot);
   if(s.k==="person")renderPerson(s.id);
   window.scrollTo(0,0);
 }
@@ -611,12 +664,16 @@ function go(v){hist.length=0;cur={k:"tab",v};render(cur)}
 function setLoc(l){LOC=l;store.set("stars-loc",l);document.querySelectorAll(".locseg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.loc===l));renderTabs();if(cur.k==="day"){cur.loc=l;render(cur)}}
 $("back").onclick=()=>{cur=hist.pop()||{k:"tab",v:"shift"};render(cur)};
 document.addEventListener("click",e=>{
-  const lb=e.target.closest("[data-loc]");if(lb&&lb.closest(".locseg")){setLoc(lb.dataset.loc);return}
+  const lb=e.target.closest(".locseg [data-loc]");if(lb){setLoc(lb.dataset.loc);return}
   const g=e.target.closest("[data-go]");if(g){go(g.dataset.go);return}
-  const dd=e.target.closest("[data-day]");if(dd&&!dd.disabled){const loc=dd.dataset.loc||(cur.v==="planning"&&cur.k==="tab"?"CAS":cur.k==="day"?cur.loc:LOC);open({k:"day",d:dd.dataset.day,loc});return}
+  const dd=e.target.closest("[data-day]");if(dd&&!dd.disabled){
+    const loc=dd.dataset.loc||(cur.k==="tab"&&cur.v==="planning"?"CAS":LOC);
+    const slot=dd.dataset.slot||"E";
+    open({k:"day",d:dd.dataset.day,loc,slot});return}
   const pp=e.target.closest("[data-p]");if(pp){open({k:"person",id:pp.dataset.p});return}
+  const tm=e.target.closest("#teams [data-team]");if(tm){teamF=tm.dataset.team;renderPeople();return}
   const ch=e.target.closest("#chips [data-t]");if(ch){trade=ch.dataset.t;renderPeople();return}
-  const st=e.target.closest("[data-step]");if(st){const k=st.dataset.k;MIN[LOC][k]=Math.max(0,Math.min(20,MIN[LOC][k]+(+st.dataset.step)));store.set("stars-min-loc",MIN);renderTabs();return}
+  const sp=e.target.closest("[data-step]");if(sp){const k=sp.dataset.k;MIN[LOC][k]=Math.max(0,Math.min(20,MIN[LOC][k]+(+sp.dataset.step)));store.set("stars-min-loc",MIN);renderTabs();return}
   if(e.target.id==="compMore"){showAll=!showAll;renderStats()}
 });
 $("minReset").onclick=()=>{MIN[LOC]={...MDEFAULT[LOC]};store.set("stars-min-loc",MIN);renderTabs()};
@@ -626,7 +683,7 @@ $("copyTsv").onclick=()=>copy(tsv(),"Table");
 $("copyMsg").onclick=()=>copy(message(),"Message");
 $("pq").addEventListener("input",e=>{pq=e.target.value;renderPeople()});
 $("psort").addEventListener("change",e=>{psort=e.target.value;renderPeople()});
-setLoc(LOC==="CAS"?"CAS":"Line");
+setLoc(LOC);
 const hv=(location.hash||"").slice(1);go(TABS.includes(hv)?hv:"shift");
 </script>
 </body>
