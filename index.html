@@ -425,18 +425,21 @@ const TYPE_DESC={"B1":"Licensed engineer · mechanical","B2":"Licensed engineer 
 const TYPE_ORDER={"B1":0,"B2":1,"A+ Cert":2,"A-Cert":3,"Mech":4};
 const TEAMS=["A","B","C","D"];
 // per team, per location: [rank, count, types]
-const MIX=[["Chf Tech",1,["B1","B2"]],["Sgt",2,["B1","B2"]],["Cpl",5,["B1","B2","B1","B2"]],["AS1(T)",4,["A+ Cert","A-Cert","A-Cert"]],["AS1",4,["A-Cert","Mech","Mech"]]];
-const RANK_ORDER=MIX.map(r=>r[0]);
+const MIX={
+  Line:[["Chf Tech",1,["B1"]],["Sgt",2,["B1","B2"]],["Cpl",5,["B1","B2","B1","B2"]],["AS1(T)",3,["A+ Cert","A-Cert","A-Cert"]],["AS1",4,["A-Cert","Mech","Mech"]]],
+  CAS:[["Chf Tech",1,["B1"]],["Sgt",4,["B1","B2"]],["Cpl",10,["B1","B2","B1","B2"]],["AS1(T)",8,["A+ Cert","A-Cert","A-Cert"]],["AS1",8,["A-Cert","Mech","Mech"]]]
+};
+const RANK_ORDER=MIX.CAS.map(r=>r[0]);
 const MGROUP=t=>t==="B1"?"B1":t==="B2"?"B2":"A";
 const MLABEL={B1:"B1",B2:"B2",A:"A-Cert"};
-const MDEFAULT={Line:{B1:2,B2:1,A:3},CAS:{B1:2,B2:1,A:3}};
-let MIN=store.get("stars-min-loc",null)||JSON.parse(JSON.stringify(MDEFAULT));
+const MDEFAULT={Line:{B1:2,B2:1,A:3},CAS:{B1:4,B2:2,A:7}};
+let MIN=store.get("stars-min-v2",null)||JSON.parse(JSON.stringify(MDEFAULT));
 const CLOSE=1;
 let HRS=store.get("stars-hrs",9);
 let LOC=store.get("stars-loc","Line");if(!LOCNAME[LOC])LOC="Line";
 
 const PEOPLE=[];let si=0;
-TEAMS.forEach(team=>["Line","CAS"].forEach(loc=>MIX.forEach(([rank,n,types])=>{for(let i=0;i<n;i++){
+TEAMS.forEach(team=>["Line","CAS"].forEach(loc=>MIX[loc].forEach(([rank,n,types])=>{for(let i=0;i<n;i++){
   const type=pick(types);
   const p={id:"p"+si,surname:SURN[si++%SURN.length],init:String.fromCharCode(65+Math.floor(rnd()*26)),rank,type,loc,team,quals:[],awayDays:{}};
   BLOCKS.filter(b=>b.E===team||b.L===team).forEach(b=>{
@@ -683,10 +686,10 @@ document.addEventListener("click",e=>{
   const pp=e.target.closest("[data-p]");if(pp){open({k:"person",id:pp.dataset.p});return}
   const tm=e.target.closest("#teams [data-team]");if(tm){teamF=tm.dataset.team;renderPeople();return}
   const ch=e.target.closest("#chips [data-t]");if(ch){trade=ch.dataset.t;renderPeople();return}
-  const sp=e.target.closest("[data-step]");if(sp){const k=sp.dataset.k;MIN[LOC][k]=Math.max(0,Math.min(20,MIN[LOC][k]+(+sp.dataset.step)));store.set("stars-min-loc",MIN);renderTabs();return}
+  const sp=e.target.closest("[data-step]");if(sp){const k=sp.dataset.k;MIN[LOC][k]=Math.max(0,Math.min(20,MIN[LOC][k]+(+sp.dataset.step)));store.set("stars-min-v2",MIN);renderTabs();return}
   if(e.target.id==="compMore"){showAll=!showAll;renderStats()}
 });
-$("minReset").onclick=()=>{MIN[LOC]={...MDEFAULT[LOC]};store.set("stars-min-loc",MIN);renderTabs()};
+$("minReset").onclick=()=>{MIN[LOC]={...MDEFAULT[LOC]};store.set("stars-min-v2",MIN);renderTabs()};
 $("hrsDown").onclick=()=>{HRS=Math.max(1,HRS-.5);store.set("stars-hrs",HRS);renderPlanning()};
 $("hrsUp").onclick=()=>{HRS=Math.min(12,HRS+.5);store.set("stars-hrs",HRS);renderPlanning()};
 $("copyTsv").onclick=()=>copy(tsv(),"Table");
