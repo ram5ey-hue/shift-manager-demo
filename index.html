@@ -310,7 +310,7 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
     </div>
     <div class="statgrid three" id="mSummary"></div>
     <div id="mDays" style="display:flex;flex-direction:column;gap:12px"></div>
-    <p class="foot">Every day has an Early and a Late team. A and C work the same blocks, B and D cover the stand-down.<br>Away reasons show work commitments only. Anything personal shows as “Unavailable”.</p>
+    <p class="foot">Line shifts show as E/L; CAS Bay shifts as ME/ML, matching STARS. CAS Bay staff and minimums are separate from Line.<br>Every day has an Early and a Late team. A and C work the same blocks, B and D cover the stand-down.<br>Away reasons show work commitments only. Anything personal shows as “Unavailable”.</p>
   </section>
 
   <section class="view" id="v-planning" role="tabpanel" hidden>
@@ -378,6 +378,8 @@ const store={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??
 const NAME={E:"Early",L:"Late",A:"Away"},TIME={E:"06:00 – 18:00",L:"18:00 – 06:00"};
 const LOCNAME={Line:"Line",CAS:"CAS Bay"};
 const OPP={E:"L",L:"E"};
+const CODE=(slot,loc)=>loc==="CAS"?"M"+slot:slot;
+const SNAME=(slot,loc)=>(loc==="CAS"?"CAS Bay ":"")+({E:"Earlies",L:"Lates"})[slot];
 
 /* ---------- four-shift roster ----------
    A Shift's blocks come from STARS. C works the same days on the opposite shift.
@@ -502,12 +504,12 @@ function renderShift(){
   const authOK=onP.filter(p=>!p.quals.some(q=>q.name==="Auth to Work"&&q.s.k==="bad")).length;
   $("hero").innerHTML=`<svg class="plane" aria-hidden="true"><use href="#lifter"/></svg><div class="chev"></div>
     <span class="tag"><i></i>On now · ${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</span>
-    <h2>${m.team} Shift · ${NAME[slot]}</h2><div class="t">${TIME[slot]} · ${LOCNAME[LOC]}</div>
+    <h2>${m.team} Shift · ${CODE(slot,LOC)}</h2><div class="t">${SNAME(slot,LOC)} · ${TIME[slot]} · ${LOCNAME[LOC]}</div>
     <div class="kpis"><div><b>${m.total}</b><small>On shift</small></div><div><b>${m.away.length}</b><small>Away</small></div><div><b>${authOK}</b><small>Auth to Work OK</small></div><div><b>${inDate}%</b><small>Quals in date</small></div></div>`;
   $("manNote").textContent=`${LOCNAME[LOC]} · ${fmt(today,{weekday:"short",day:"numeric",month:"short"})}`;
   const r=ROSTER[iso(today)];
   $("man").innerHTML=r?`<div class="twoslots">${["E","L"].map(s=>{const mm=manningOn(today,LOC,s);return `<button class="card slotcard" data-day="${iso(today)}" data-slot="${s}" style="cursor:pointer;text-align:left;font:inherit;color:inherit">
-      <h4><span><span class="pill ${s}">${NAME[s]}</span></span>${tl(mm.team)}</h4>
+      <h4><span><span class="pill ${s}">${CODE(s,LOC)} · ${NAME[s]}</span></span>${tl(mm.team)}</h4>
       <span class="mcells">${["B1","B2","A"].map(k=>cell(k,mm.g[k])).join("")}</span>
       <span class="mstatus ${mm.worst}" style="margin:0;font-size:.85rem"><b>${WORD[mm.worst]}</b> · ${mm.total} on</span></button>`}).join("")}</div>
       <div class="mlinks" style="padding-top:0"><span style="color:var(--muted);font-size:.85rem">Tap a shift to see who's working</span><button class="more" data-go="manning">Every day ›</button></div>`:`<div class="empty">No roster loaded for today.</div>`;
@@ -531,7 +533,7 @@ function renderManning(){
     const bad=ks.some(k=>["E","L"].some(s=>manningOn(D(k),LOC,s).worst==="bad"));
     return `<div class="sec"><span>Week of ${fmt(w,{day:"numeric",month:"short"})}</span><small style="color:var(--${bad?"bad":iss?"warn":"ok"})">${iss?iss+" shift"+(iss>1?"s":"")+" to watch":"all manned"}</small></div><div class="card">`+
       ks.map(k=>{const d=D(k);return `<div class="dayrow"><div class="dh"><b>${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</b><small>${+d===+today?"Today":""}</small></div>`+
-        ["E","L"].map(s=>{const m=manningOn(d,LOC,s);return `<button class="slot ${m.worst}" data-day="${k}" data-slot="${s}" aria-label="${fmt(d,{weekday:"long",day:"numeric",month:"long"})} ${NAME[s]}, ${m.team} Shift: ${WORD[m.worst]}"><span class="sl"><span class="pill ${s}">${s}</span>${tl(m.team)}</span><span class="mcells">${["B1","B2","A"].map(g=>cell(g,m.g[g])).join("")}</span><span class="go">›</span></button>`}).join("")+`</div>`}).join("")+`</div>`}).join("");
+        ["E","L"].map(s=>{const m=manningOn(d,LOC,s);return `<button class="slot ${m.worst}" data-day="${k}" data-slot="${s}" aria-label="${fmt(d,{weekday:"long",day:"numeric",month:"long"})} ${NAME[s]}, ${m.team} Shift: ${WORD[m.worst]}"><span class="sl"><span class="pill ${s}">${CODE(s,LOC)}</span>${tl(m.team)}</span><span class="mcells">${["B1","B2","A"].map(g=>cell(g,m.g[g])).join("")}</span><span class="go">›</span></button>`}).join("")+`</div>`}).join("")+`</div>`}).join("");
 }
 
 /* ---------- PLANNING (CAS Bay, 7 days, E + L) ---------- */
@@ -553,22 +555,22 @@ function renderPlanning(){
   const c=(n)=>`${hfmt(hrsOf(n))}<small class="hc">${n} ${n===1?"person":"people"}</small>`;
   Object.entries(weeks).forEach(([w,rs])=>{
     h+=`<tr class="wk"><td colspan="${TYPES.length+5}">Week of ${fmt(w,{weekday:"short",day:"numeric",month:"short"})}</td></tr>`;
-    rs.forEach(({k,d,s,m})=>{h+=`<tr data-day="${k}" data-slot="${s}"${s==="E"?' class="dfirst"':""}><td class="dt">${s==="E"?fmt(d,{weekday:"short",day:"numeric",month:"short"}):""}</td><td><span class="pill ${s}">${NAME[s]}</span></td><td>${tl(m.team)}</td>${TYPES.map(t=>`<td class="th${m.byType[t]?"":" zero"}">${c(m.byType[t])}</td>`).join("")}<td class="hrs">${c(m.total)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
+    rs.forEach(({k,d,s,m})=>{h+=`<tr data-day="${k}" data-slot="${s}"${s==="E"?' class="dfirst"':""}><td class="dt">${s==="E"?fmt(d,{weekday:"short",day:"numeric",month:"short"}):""}</td><td><span class="pill ${s}">${CODE(s,"CAS")} · ${NAME[s]}</span></td><td>${tl(m.team)}</td>${TYPES.map(t=>`<td class="th${m.byType[t]?"":" zero"}">${c(m.byType[t])}</td>`).join("")}<td class="hrs">${c(m.total)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
     const sum=t=>rs.reduce((s,r)=>s+(t?r.m.byType[t]:r.m.total),0);
     h+=`<tr class="sub"><td>Week total</td><td></td><td></td>${TYPES.map(t=>`<td>${hfmt(hrsOf(sum(t)))}</td>`).join("")}<td class="hrs">${hfmt(hrsOf(sum()))}</td><td></td></tr>`;
   });
   $("ptable").innerHTML=h+"</tbody>";
 }
 function tsv(){
-  const head=["Date","Day","Shift","Team",...TYPES.map(t=>t+" hrs"),"Total hrs",...TYPES.map(t=>t+" people"),"Total people","Status"];
-  return [head.join("\t"),...planRows().map(({d,s,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),fmt(d,{weekday:"short"}),NAME[s],m.team,...TYPES.map(t=>hfmt(hrsOf(m.byType[t]))),hfmt(hrsOf(m.total)),...TYPES.map(t=>m.byType[t]),m.total,WORD[m.worst]].join("\t"))].join("\n");
+  const head=["Date","Day","Shift code","Shift","Team",...TYPES.map(t=>t+" hrs"),"Total hrs",...TYPES.map(t=>t+" people"),"Total people","Status"];
+  return [head.join("\t"),...planRows().map(({d,s,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),fmt(d,{weekday:"short"}),CODE(s,"CAS"),NAME[s],m.team,...TYPES.map(t=>hfmt(hrsOf(m.byType[t]))),hfmt(hrsOf(m.total)),...TYPES.map(t=>m.byType[t]),m.total,WORD[m.worst]].join("\t"))].join("\n");
 }
 function message(){
   const rows=planRows().filter(r=>diff(r.d)<14);
   let out=`CAS Bay engineer hours available, next 14 days (${HRS.toFixed(1)} productive hrs per person per shift)\n`;
   let last="";
   rows.forEach(({k,d,s,m})=>{if(k!==last){out+=`\n${fmt(d,{weekday:"short",day:"numeric",month:"short"})}\n`;last=k}
-    out+=`  ${NAME[s]} (${m.team} Shift): B1 ${hfmt(hrsOf(m.byType["B1"]))}h, B2 ${hfmt(hrsOf(m.byType["B2"]))}h, A+ ${hfmt(hrsOf(m.byType["A+ Cert"]))}h, A-Cert ${hfmt(hrsOf(m.byType["A-Cert"]))}h, Mech ${hfmt(hrsOf(m.byType["Mech"]))}h — total ${hfmt(hrsOf(m.total))}h${m.worst==="bad"?" (BELOW MINIMUM)":""}\n`});
+    out+=`  ${CODE(s,"CAS")} ${NAME[s]} (${m.team} Shift): B1 ${hfmt(hrsOf(m.byType["B1"]))}h, B2 ${hfmt(hrsOf(m.byType["B2"]))}h, A+ ${hfmt(hrsOf(m.byType["A+ Cert"]))}h, A-Cert ${hfmt(hrsOf(m.byType["A-Cert"]))}h, Mech ${hfmt(hrsOf(m.byType["Mech"]))}h — total ${hfmt(hrsOf(m.total))}h${m.worst==="bad"?" (BELOW MINIMUM)":""}\n`});
   return out;
 }
 async function copy(text,label){
@@ -627,9 +629,9 @@ function renderDay(k,loc,slot){
       <div><p class="h1">${fmt(d,{weekday:"long",day:"numeric",month:"long"})}<span>${LOCNAME[loc]} · ${rel}</span></p></div>
       <button class="dnav" ${next?`data-day="${next}" data-slot="${slot}" data-loc="${loc}"`:"disabled"} aria-label="Next day">›</button>
     </div>
-    <div class="slotsw" role="group" aria-label="Shift">${["E","L"].map(s=>`<button class="${s}" data-day="${k}" data-slot="${s}" data-loc="${loc}" aria-pressed="${s===slot}">${NAME[s]} · ${ROSTER[k][s]}</button>`).join("")}</div>
+    <div class="slotsw" role="group" aria-label="Shift">${["E","L"].map(s=>`<button class="${s}" data-day="${k}" data-slot="${s}" data-loc="${loc}" aria-pressed="${s===slot}">${CODE(s,loc)} · ${ROSTER[k][s]} Shift</button>`).join("")}</div>
     <div class="card"><div class="mcells big">${["B1","B2","A"].map(g=>cell(g,m.g[g])).join("")}</div>
-      <div class="mstatus ${m.worst}" style="margin-bottom:14px"><b>${WORD[m.worst]}</b> · ${m.team} Shift ${TIME[slot]} · ${m.total} working, ${m.away.length} away${loc==="CAS"?` · ${(m.total*HRS).toFixed(0)} man-hours`:""}</div></div>
+      <div class="mstatus ${m.worst}" style="margin-bottom:14px"><b>${WORD[m.worst]}</b> · ${m.team} Shift ${CODE(slot,loc)} ${TIME[slot]} · ${m.total} working, ${m.away.length} away${loc==="CAS"?` · ${(m.total*HRS).toFixed(0)} man-hours`:""}</div></div>
     ${groups}
     ${m.away.length?`<div class="sec"><span>Away</span><small>${m.away.length}</small></div><div class="card plist">${m.away.sort((a,b)=>TYPE_ORDER[a.type]-TYPE_ORDER[b.type]).map(p=>personRow(p,`<span class="pill A">${awayWhy(p,d)}</span>`)).join("")}</div>`:""}`;
 }
@@ -640,7 +642,7 @@ function renderPerson(id){
   const start=addD(today,-((today.getDay()+6)%7));
   let strip=["M","T","W","T","F","S","S"].map(d=>`<div class="dow">${d}</div>`).join("");
   for(let i=0;i<28;i++){const d=addD(start,i),s=statusOn(p,d),k=iso(d),sl=teamShift(p.team,d),tag=sl?"button":"div";
-    strip+=`<${tag} class="d ${s}${+d===+today?" today":""}"${sl?` data-day="${k}" data-slot="${sl}" data-loc="${p.loc}"`:""} title="${fmt(d,{weekday:"long",day:"numeric",month:"short"})}: ${s==="A"?awayWhy(p,d):s?NAME[s]:"Stand-down"}">${d.getDate()}<small>${s||"&nbsp;"}</small></${tag}>`}
+    strip+=`<${tag} class="d ${s}${+d===+today?" today":""}"${sl?` data-day="${k}" data-slot="${sl}" data-loc="${p.loc}"`:""} title="${fmt(d,{weekday:"long",day:"numeric",month:"short"})}: ${s==="A"?awayWhy(p,d):s?NAME[s]:"Stand-down"}">${d.getDate()}<small>${s==="A"?"A":s?CODE(s,p.loc):"&nbsp;"}</small></${tag}>`}
   const awayList=Object.keys(p.awayDays).filter(k=>D(k)>=today).sort().slice(0,6);
   const grp=(k,title)=>{const g=p.quals.filter(q=>q.s.k===k);if(!g.length)return"";
     return `<div class="sec">${title} <small>${g.length}</small></div><div class="card">${g.map(q=>`<div class="qrow"><div class="n">${esc(q.name)}<small>${q.type}${q.exp?" · expires "+fmt(q.exp):" · no date recorded"}${q.gap?" · no evidence in folder":""}</small></div><span class="pill ${q.s.k}">${q.s.label}</span></div>`).join("")}</div>`};
@@ -650,7 +652,7 @@ function renderPerson(id){
     <div class="card ready"><div class="row1"><span class="big">${p.pct}%<small>in date</small></span>${p.bad?`<span class="pill bad">${p.bad} need action</span>`:`<span class="pill ok">All good</span>`}</div>
       <div class="bars"><span style="flex:${ok};background:var(--ok)"></span><span style="flex:${p.warn};background:var(--warn)"></span><span style="flex:${p.bad};background:var(--bad)"></span></div></div>
     <div class="sec">Next 4 weeks <small>tap a shift day</small></div><div class="card strip">${strip}</div>
-    ${awayList.length?`<div class="sec">Away on shift days</div><div class="card">${awayList.map(k=>`<button class="qrow" data-day="${k}" data-slot="${teamShift(p.team,D(k))}" data-loc="${p.loc}"><div class="n">${fmt(k,{weekday:"short",day:"numeric",month:"short"})}<small>${NAME[teamShift(p.team,D(k))]} shift</small></div><span class="pill A">${p.awayDays[k]}</span></button>`).join("")}</div>`:""}
+    ${awayList.length?`<div class="sec">Away on shift days</div><div class="card">${awayList.map(k=>`<button class="qrow" data-day="${k}" data-slot="${teamShift(p.team,D(k))}" data-loc="${p.loc}"><div class="n">${fmt(k,{weekday:"short",day:"numeric",month:"short"})}<small>${CODE(teamShift(p.team,D(k)),p.loc)} · ${NAME[teamShift(p.team,D(k))]} shift</small></div><span class="pill A">${p.awayDays[k]}</span></button>`).join("")}</div>`:""}
     ${grp("bad","Overdue or missing")}${grp("warn","Due in 90 days")}${grp("ok","In date")}`;
 }
 
