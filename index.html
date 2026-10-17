@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0c2340">
+<title>My STARS Manager</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: phone app shell matching My STARS — sticky title bar, demo ribbon, three views (Shift / People / Stats) + person drill-down, fixed bottom tab bar */
+:root{
+  --bg:#eef2f6; --card:#ffffff; --ink:#0f1d2e; --muted:#5a6b7e; --line:#d6dee7;
+  --navy:#0c2340; --navy-2:#173a63; --raf:#5d8aa8; --on-navy:#f1f5fa; --mark:#f2c230;
+  --early:#d07a2a; --early-bg:#fbeadb; --late:#3d6ea8; --late-bg:#dfe9f6; --away:#7b6aa8; --away-bg:#ece8f6;
+  --bad:#c0392b; --bad-bg:#fbe3e0; --warn:#b37400; --warn-bg:#fcf0d4; --ok:#2e7d4f; --ok-bg:#e1f2e7;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --tabh:64px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#08111c; --card:#111d2b; --ink:#e6edf5; --muted:#8fa1b5; --line:#223244;
+  --navy:#0f2a4b; --navy-2:#1b416d; --raf:#8db3cf; --on-navy:#f1f5fa; --mark:#f5cd4f;
+  --early:#f0a35c; --early-bg:#3a2715; --late:#86b0e4; --late-bg:#172b44; --away:#b3a4e3; --away-bg:#262040;
+  --bad:#ff8c80; --bad-bg:#3b1a17; --warn:#f2c35a; --warn-bg:#352812; --ok:#78d29c; --ok-bg:#12301f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#08111c; --card:#111d2b; --ink:#e6edf5; --muted:#8fa1b5; --line:#223244;
+  --navy:#0f2a4b; --navy-2:#1b416d; --raf:#8db3cf; --on-navy:#f1f5fa; --mark:#f5cd4f;
+  --early:#f0a35c; --early-bg:#3a2715; --late:#86b0e4; --late-bg:#172b44; --away:#b3a4e3; --away-bg:#262040;
+  --bad:#ff8c80; --bad-bg:#3b1a17; --warn:#f2c35a; --warn-bg:#352812; --ok:#78d29c; --ok-bg:#12301f; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+button{font:inherit;color:inherit}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--navy);color:var(--on-navy)}
+.top .in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;max-width:640px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{width:30px;height:30px;flex:none;color:var(--mark)}
+.brand b{font-family:var(--display);font-weight:700;font-size:1.4rem;letter-spacing:.06em;text-transform:uppercase;line-height:1}
+.brand small{display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;opacity:.7;text-transform:uppercase}
+.back{background:rgba(255,255,255,.12);border:0;color:var(--on-navy);border-radius:10px;padding:7px 12px;font-weight:600;cursor:pointer}
+.back[hidden]{display:none}
+.demo{background:repeating-linear-gradient(135deg,var(--mark) 0 12px,#1a1a1a 12px 24px);padding:3px 0}
+.demo div{background:var(--mark);color:#1a1a1a;text-align:center;font-family:var(--mono);font-size:.7rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;max-width:420px;margin:0 auto;padding:2px 8px}
+
+main{max-width:640px;margin:0 auto;padding-block:18px calc(var(--tabh) + 28px + env(safe-area-inset-bottom,0px))}
+.view{display:flex;flex-direction:column;gap:16px}
+.view[hidden]{display:none!important}
+.h1{font-family:var(--display);font-weight:600;font-size:1.7rem;line-height:1.1;margin:0}
+.h1 span{display:block;font-family:var(--body);font-weight:500;font-size:.95rem;color:var(--muted);margin-top:2px}
+.sec{font-family:var(--display);font-weight:600;font-size:1rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:6px 0 -4px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sec small{font-family:var(--mono);font-size:.72rem;letter-spacing:0;text-transform:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px}
+.empty{padding:16px;color:var(--muted)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--raf);outline-offset:2px}
+
+/* Shift hero */
+.hero{position:relative;overflow:hidden;border-radius:18px;background:linear-gradient(155deg,var(--navy-2),var(--navy) 70%);color:var(--on-navy);padding:18px 18px 22px}
+.hero .plane{position:absolute;right:-34px;top:-18px;width:220px;height:220px;opacity:.12;pointer-events:none;color:var(--on-navy)}
+.hero .tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.12);padding:4px 9px;border-radius:99px}
+.hero .tag i{width:7px;height:7px;border-radius:50%;background:var(--mark)}
+.hero h2{font-family:var(--display);font-weight:700;font-size:3rem;line-height:.95;margin:12px 0 2px;text-transform:uppercase}
+.hero .t{font-size:1rem;opacity:.9}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;border-top:1px solid rgba(255,255,255,.18);padding-top:12px;font-variant-numeric:tabular-nums}
+.kpis div{min-width:0}
+.kpis b{display:block;font-family:var(--display);font-size:1.7rem;font-weight:600;line-height:1}
+.kpis small{font-size:.74rem;opacity:.75}
+.chev{position:absolute;left:0;bottom:0;width:100%;height:6px;background:repeating-linear-gradient(135deg,var(--mark) 0 10px,transparent 10px 20px);opacity:.85}
+
+/* manning bars */
+.man{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.mrow{display:grid;grid-template-columns:88px 1fr 46px;gap:10px;align-items:center;font-size:.92rem}
+.mrow .lbl{font-weight:600}
+.track{height:12px;border-radius:99px;background:var(--bg);overflow:hidden;display:flex}
+.track span{display:block;height:100%}
+.mrow .v{font-family:var(--mono);font-size:.8rem;text-align:right;color:var(--muted)}
+
+/* people rows */
+.plist{overflow:hidden}
+.prow{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer}
+.prow:first-child{border-top:0}
+.av{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:1.05rem;background:var(--bg);color:var(--navy-2);position:relative}
+.av.away{background:var(--away-bg);color:var(--away)}
+.prow .n{min-width:0;font-weight:600}
+.prow .n small{display:block;font-weight:400;color:var(--muted);font-size:.83rem}
+.pill{font-family:var(--mono);font-size:.72rem;font-weight:500;padding:3px 9px;border-radius:99px;white-space:nowrap;display:inline-block}
+.bad{background:var(--bad-bg);color:var(--bad)} .warn{background:var(--warn-bg);color:var(--warn)} .ok{background:var(--ok-bg);color:var(--ok)} .none{background:var(--bg);color:var(--muted)}
+.pill.E{background:var(--early-bg);color:var(--early)} .pill.L{background:var(--late-bg);color:var(--late)} .pill.A{background:var(--away-bg);color:var(--away)}
+
+.tools{display:flex;flex-direction:column;gap:10px}
+.search{display:flex;align-items:center;gap:8px;padding:0 14px;height:46px}
+.search svg{width:18px;height:18px;stroke:var(--muted);flex:none}
+.search input{border:0;background:transparent;font:inherit;color:var(--ink);flex:1;min-width:0;height:100%;outline:none}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:600;font-size:.88rem;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--navy);color:var(--on-navy)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px;font-weight:600;font-size:.88rem;color:var(--muted);cursor:pointer;white-space:nowrap}
+.chips button[aria-pressed="true"]{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.chips button span{font-family:var(--mono);font-size:.72rem;opacity:.75;margin-left:4px}
+.sortrow{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:var(--muted)}
+.sortrow select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+
+/* stats */
+.comp{padding:6px 0}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) 110px 44px;gap:10px;align-items:center;padding:8px 16px;font-size:.9rem}
+.crow .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow .nm small{color:var(--muted);font-size:.78rem;margin-left:4px}
+.crow .v{font-family:var(--mono);font-size:.8rem;text-align:right;font-variant-numeric:tabular-nums}
+.more{background:none;border:0;color:var(--raf);font-weight:600;padding:10px 16px;cursor:pointer;text-align:left}
+.chart{padding:16px 16px 10px}
+.cols{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end;height:150px;border-bottom:1px solid var(--line);position:relative}
+.cols .c{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;min-width:0}
+.cols .c b{font-family:var(--mono);font-size:.78rem;font-weight:500}
+.cols .c span{display:block;width:70%;max-width:44px;border-radius:6px 6px 0 0;background:var(--raf)}
+.cols .c span.hot{background:var(--warn)}
+.xl{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:6px;font-family:var(--mono);font-size:.72rem;color:var(--muted);text-align:center}
+.gridline{position:absolute;left:0;right:0;border-top:1px dashed var(--line)}
+.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{padding:14px}
+.stat b{display:block;font-family:var(--display);font-size:2rem;font-weight:700;line-height:1}
+.stat small{color:var(--muted);font-size:.84rem}
+
+/* person */
+.phead{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center}
+.phead .av{width:64px;height:64px;border-radius:18px;font-size:1.5rem}
+.phead h2{font-family:var(--display);font-weight:700;font-size:1.9rem;margin:0;line-height:1}
+.phead p{margin:3px 0 0;color:var(--muted)}
+.strip{padding:12px;display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.strip .dow{text-align:center;font-family:var(--mono);font-size:.66rem;color:var(--muted)}
+.strip .d{border-radius:8px;text-align:center;padding:5px 0;font-size:.85rem;background:var(--bg);min-width:0}
+.strip .d small{display:block;font-family:var(--mono);font-size:.6rem}
+.strip .d.E{background:var(--early-bg);color:var(--early)} .strip .d.L{background:var(--late-bg);color:var(--late)} .strip .d.A{background:var(--away-bg);color:var(--away)}
+.strip .d.today{box-shadow:inset 0 0 0 2px var(--ink)}
+.qrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:11px 16px;border-top:1px solid var(--line)}
+.qrow:first-child{border-top:0}
+.qrow .n{min-width:0;font-weight:600}
+.qrow .n small{display:block;font-weight:400;color:var(--muted);font-size:.82rem}
+.ready{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ready .row1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ready .big{font-family:var(--display);font-weight:700;font-size:2.2rem;line-height:1}
+.ready .big small{font-family:var(--body);font-size:.95rem;color:var(--muted);font-weight:500;margin-left:6px}
+.bars{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px;background:var(--line)}
+
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tabbar .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);height:var(--tabh)}
+/* manning */
+.mcells{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-width:0}
+.mc{display:flex;flex-direction:column;align-items:center;border-radius:10px;padding:5px 2px;min-width:0;line-height:1.1}
+.mc small{font-family:var(--mono);font-size:.62rem;letter-spacing:.04em}
+.mc b{font-family:var(--display);font-size:1.35rem;font-weight:700}
+.mc i{font-style:normal;font-size:.62rem;opacity:.8}
+.mc.bad{background:var(--bad-bg);color:var(--bad);box-shadow:inset 0 0 0 1.5px var(--bad)}
+.mcells.big{padding:14px 14px 4px}
+.mcells.big .mc{padding:10px 4px}
+.mcells.big .mc b{font-size:2.1rem}
+.mcells.big .mc small{font-size:.75rem}
+.mstatus{margin:8px 14px 0;padding:9px 12px;border-radius:10px;font-size:.92rem}
+.mstatus.bad{background:var(--bad-bg);color:var(--bad)} .mstatus.warn{background:var(--warn-bg);color:var(--warn)} .mstatus.ok{background:var(--ok-bg);color:var(--ok)}
+#man{display:flex;flex-direction:column;gap:0;padding:0 0 4px}
+.minset{padding:6px 16px 12px}
+.minrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.minrow b{font-family:var(--display);font-size:1.3rem;font-weight:700;margin-right:8px}
+.minrow small{color:var(--muted);font-size:.84rem}
+.step{display:flex;align-items:center;gap:4px;flex:none}
+.step button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:1.2rem;cursor:pointer}
+.step output{min-width:30px;text-align:center;font-family:var(--display);font-size:1.5rem;font-weight:700}
+.minfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:10px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.lg{display:inline-block;width:9px;height:9px;border-radius:3px;margin:0 4px 0 8px}
+.lg:first-child{margin-left:0}
+.lg.bad{background:var(--bad)} .lg.warn{background:var(--warn)} .lg.ok{background:var(--ok)}
+.statgrid.three{grid-template-columns:repeat(3,1fr)}
+.mday{display:grid;grid-template-columns:58px 1fr 16px;gap:10px;align-items:center;padding:8px 12px;cursor:pointer;width:100%;background:none;border:0;border-top:1px solid var(--line);text-align:left}
+.mday:first-child{border-top:0}
+.mday .go{color:var(--muted);font-size:1.3rem;text-align:right}
+.mday.bad{background:linear-gradient(90deg,var(--bad-bg),transparent 60%)}
+.mlinks{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px 8px;flex-wrap:wrap}
+.mlinks .more{padding:6px 0}
+.btn{background:var(--navy);color:var(--on-navy);border:0;border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer}
+.dayhead{display:grid;grid-template-columns:40px 1fr 40px;gap:10px;align-items:center;text-align:center}
+.dayhead .h1 .pill{font-size:.7rem;vertical-align:1px}
+.dnav{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:1.3rem;cursor:pointer}
+.dnav:disabled{opacity:.3;cursor:default}
+.strip button.d{border:0;cursor:pointer;font:inherit;color:inherit}
+button.qrow{width:100%;background:none;border:0;border-top:1px solid var(--line);text-align:left;cursor:pointer;font:inherit;color:inherit}
+.card>button.qrow:first-child{border-top:0}
+.mday .dd b{display:block;font-weight:600}
+.mday .dd small{color:var(--muted);font-size:.78rem}
+.mdet{padding:4px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.mdet h5{margin:0 0 4px;font-family:var(--display);font-size:1rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.mdet h5 span{font-family:var(--body);font-size:.8rem;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:400}
+.mdet p{margin:0;display:flex;flex-wrap:wrap;gap:5px}
+.mdet .nm{border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:3px 10px;font-size:.84rem;cursor:pointer}
+.mdet .nm em{font-style:normal;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+.mdet .aw{font-size:.84rem;color:var(--away);display:block}
+.none-txt{color:var(--bad);font-size:.85rem}
+.tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.75rem;font-weight:600;color:var(--muted);cursor:pointer}
+.tabbar button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tabbar button[aria-selected="true"]{color:var(--navy-2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tabbar button[aria-selected="true"]{color:var(--raf)}}
+:root[data-theme="dark"] .tabbar button[aria-selected="true"]{color:var(--raf)}
+.foot{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.5}
+@media (max-width:380px){.kpis{grid-template-columns:repeat(2,1fr)}.crow{grid-template-columns:minmax(0,1fr) 80px 40px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="lifter" viewBox="0 0 200 200">
+    <path fill="currentColor" d="M96 8c-3 6-4 14-4 24v52L18 108v12l74-12v44l-22 14v10l30-6 30 6v-10l-22-14v-44l74 12v-12l-74-24V32c0-10-1-18-4-24-1-3-6-3-8 0z"/>
+    <rect fill="currentColor" x="43" y="86" width="9" height="20" rx="4"/><rect fill="currentColor" x="66" y="78" width="9" height="20" rx="4"/>
+    <rect fill="currentColor" x="125" y="78" width="9" height="20" rx="4"/><rect fill="currentColor" x="148" y="86" width="9" height="20" rx="4"/>
+    <rect fill="currentColor" x="34" y="84" width="27" height="3" rx="1.5"/><rect fill="currentColor" x="57" y="76" width="27" height="3" rx="1.5"/>
+    <rect fill="currentColor" x="116" y="76" width="27" height="3" rx="1.5"/><rect fill="currentColor" x="139" y="84" width="27" height="3" rx="1.5"/>
+  </symbol>
+</svg>
+
+<header class="top"><div class="in pad">
+  <div class="brand"><svg aria-hidden="true"><use href="#lifter"/></svg><div><b>STARS Manager</b><small>A400M · 70 Sqn Eng · A Shift</small></div></div>
+  <button class="back" id="back" hidden>‹ Back</button>
+</div>
+<div class="demo"><div>Demo · fictional personnel · no real data</div></div></header>
+
+<main class="pad">
+  <!-- SHIFT -->
+  <section class="view" id="v-shift" role="tabpanel">
+    <p class="h1" id="hello"></p>
+    <div class="hero" id="hero"></div>
+    <div class="sec">Minimum manning <small id="manNote"></small></div>
+    <div class="card man" id="man"></div>
+    <div class="sec">Needs chasing <small>most overdue first</small></div>
+    <div class="card plist" id="chase"></div>
+    <div class="sec">Expiring in 30 days</div>
+    <div class="card plist" id="soon"></div>
+  </section>
+
+  <!-- MANNING -->
+  <section class="view" id="v-manning" role="tabpanel" hidden>
+    <p class="h1">Minimum manning<span>Every shift day checked against your minimums</span></p>
+    <div class="card minset">
+      <div class="minrow"><span><b>B1</b><small>Licensed · mech</small></span><span class="step"><button data-k="B1" data-step="-1" aria-label="Lower B1 minimum">−</button><output id="min-B1">2</output><button data-k="B1" data-step="1" aria-label="Raise B1 minimum">+</button></span></div>
+      <div class="minrow"><span><b>B2</b><small>Licensed · avionics</small></span><span class="step"><button data-k="B2" data-step="-1" aria-label="Lower B2 minimum">−</button><output id="min-B2">1</output><button data-k="B2" data-step="1" aria-label="Raise B2 minimum">+</button></span></div>
+      <div class="minrow"><span><b>A-Cert</b><small>A-Cert, A+ Cert and Mech all count</small></span><span class="step"><button data-k="A" data-step="-1" aria-label="Lower A-Cert minimum">−</button><output id="min-A">3</output><button data-k="A" data-step="1" aria-label="Raise A-Cert minimum">+</button></span></div>
+      <div class="minfoot"><span><i class="lg bad"></i>Below <i class="lg warn"></i>At min or 1 above <i class="lg ok"></i>Manned</span><button id="minReset" class="more" style="padding:0">Reset</button></div>
+    </div>
+    <div class="statgrid three" id="mSummary"></div>
+    <div id="mDays" style="display:flex;flex-direction:column;gap:12px"></div>
+    <p class="foot">Away reasons show work commitments only. Anything personal shows as “Unavailable”.</p>
+  </section>
+
+  <!-- PEOPLE -->
+  <section class="view" id="v-people" role="tabpanel" hidden>
+    <div class="tools">
+      <label class="card search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="pq" type="search" placeholder="Search name or qual" aria-label="Search people"></label>
+      <div class="chips" role="group" aria-label="Employee type">
+        <button id="tr-all" data-t="all" aria-pressed="true">All</button>
+        <button id="tr-b1" data-t="B1" aria-pressed="false">B1</button>
+        <button id="tr-b2" data-t="B2" aria-pressed="false">B2</button>
+        <button id="tr-ap" data-t="A+ Cert" aria-pressed="false">A+ Cert</button>
+        <button id="tr-a" data-t="A-Cert" aria-pressed="false">A-Cert</button>
+        <button id="tr-m" data-t="Mech" aria-pressed="false">Mech</button>
+      </div>
+      <div class="sortrow"><span id="pcount"></span><label>Sort <select id="psort"><option value="risk">Needs action</option><option value="rank">Rank</option><option value="name">Name</option></select></label></div>
+    </div>
+    <div class="card plist" id="people"></div>
+  </section>
+
+  <!-- STATS -->
+  <section class="view" id="v-stats" role="tabpanel" hidden>
+    <p class="h1">Shift readiness<span id="statDate"></span></p>
+    <div class="statgrid" id="statTiles"></div>
+    <div class="sec">Readiness by rank</div>
+    <div class="card man" id="byRank"></div>
+    <div class="sec">Compliance by qual <small>worst first</small></div>
+    <div class="card comp" id="comp"></div>
+    <div class="sec">Expiries ahead <small>next 6 months</small></div>
+    <div class="card chart" id="exp"></div>
+    <p class="foot">All figures are generated from fictional demo personnel.<br>In a live version they'd come straight from STARS for the logged-in manager's unit.</p>
+  </section>
+
+  <!-- PERSON -->
+  <section class="view" id="v-sub" hidden></section>
+</main>
+
+<nav class="tabbar" role="tablist"><div class="in">
+  <button id="t-shift" role="tab" aria-selected="true" data-go="shift"><svg viewBox="0 0 24 24"><path d="M3 12h18M12 3l3 9-3 9-3-9z"/></svg>Shift</button>
+  <button id="t-manning" role="tab" aria-selected="false" data-go="manning"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>Manning</button>
+  <button id="t-people" role="tab" aria-selected="false" data-go="people"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.5c2.6 0 4.4 1.6 5 4.5"/></svg>People</button>
+  <button id="t-stats" role="tab" aria-selected="false" data-go="stats"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
+</div></nav>
+
+<script>
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const D=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const addM=(d,n)=>{const x=new Date(d);x.setMonth(x.getMonth()+n);return x};
+const fmt=(d,o={day:"numeric",month:"short",year:"numeric"})=>(typeof d==="string"?D(d):d).toLocaleDateString("en-GB",o);
+const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+const diff=d=>Math.round((d-today)/864e5);
+let seed=40017;const rnd=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const pick=a=>a[Math.floor(rnd()*a.length)];
+const NAME={E:"Early",L:"Late",A:"Away"},TIME={E:"06:00 – 18:00",L:"18:00 – 06:00"};
+let SHOWN_DAY=null;
+
+/* ---------- roster (A Shift pattern) ---------- */
+const SHIFTS=[["L","2026-10-16","2026-10-20"],["E","2026-10-26","2026-10-29"],["L","2026-11-04","2026-11-08"],["E","2026-11-13","2026-11-17"],["L","2026-11-23","2026-11-26"],["E","2026-12-02","2026-12-06"],["L","2026-12-11","2026-12-15"],["E","2026-12-21","2026-12-24"],["L","2026-12-30","2027-01-03"],["E","2027-01-08","2027-01-12"]];
+const shiftOn={};SHIFTS.forEach(([t,a,b])=>{for(let d=D(a);d<=D(b);d=addD(d,1))shiftOn[iso(d)]=t});
+
+/* ---------- qual catalogue (training + authorisations only; no medical, fitness, leave or ID) ---------- */
+const C="Currency",A="Eng auth";
+const QUALS=[
+ [C,"WHT",6],[C,"Stn Explosive Awareness",12],[C,"General Security Awareness",12],[C,"GSR ARTS Test",12],[C,"IRT Mod 1",12],[C,"IRT Mod 2",12],
+ [C,"Working at Height",12],[C,"Basic Fire Awareness",24],[C,"PID Card Renewal",24],[C,"Human Factors & Error Mgmt",24],[C,"Heat Illness Prevention MOD 2",24],
+ [C,"DLE Appraisal Training",36],[C,"Counter Fraud, Bribery & Corruption",36],[C,"Diversity and Inclusion",36],[C,"Protecting Personal Data",36],
+ [C,"Information & Knowledge Awareness",36],[C,"Record Management Awareness",36],[C,"Airfield Driving Permit",36],
+ [A,"Auth to Work",24],[A,"Pt 145 Block Trg",24],[A,"Competency Assessment",24],[A,"MDS SQEP",24],[A,"Specialist Role Equipment",24],
+ [A,"Eng Run",12,["B1"]],[A,"Engine/APU Borescope",24,["B1","A+ Cert"]],[A,"Prop Tap Testing",24,["B1","A+ Cert","A-Cert"]],[A,"Eng & Prop Flange Interface",24,["B1","A+ Cert"]],
+ [A,"Avionics Functional Test",24,["B2"]],[A,"Cat B1",24,["B1"]],[A,"Cat B2",24,["B2"]],[A,"A+ Cert Authorisation",24,["A+ Cert"]],[A,"A-Cert Authorisation",24,["A-Cert"]],[A,"Overhead Crane",24],[A,"Dom Water",12],[A,"Toilet Truck",12],[A,"Manual Handling",36],
+ [A,"COSHH Hazardous Substance Trg",60],[A,"MEWP Boom/Scissor",60],[A,"Working at Height with Harness",60],[A,"Doors H94",60],
+ [A,"Air Start Trolley",60],[A,"Hyd Serv Trolley",60],[A,"N2 and O2 Trolley",60]
+];
+
+/* ---------- fictional personnel ---------- */
+const SURN=["Ashby","Barlow","Carver","Dalton","Ellis","Fenwick","Garside","Holden","Ingram","Jarvis","Kerr","Lowe","Marsh","Norris","Oakley","Pryce","Quinn","Rhodes","Slater","Tate","Underwood","Vance","Walsh","Yates","Ainsworth","Bevan","Crane","Doyle","Eastwood","Finch","Gale","Hurst","Irwin","Jessop","Kemp","Lister","Mercer","Nash","Orton","Pike"];
+/* five employee types; which ranks hold which type */
+const TYPES=["B1","B2","A+ Cert","A-Cert","Mech"];
+const TYPE_DESC={"B1":"Licensed engineer · mechanical","B2":"Licensed engineer · avionics","A+ Cert":"Certifying technician (A+)","A-Cert":"Certifying technician (A)","Mech":"Mechanic"};
+const RANKS=[["Chf Tech",1,["B1"]],["Sgt",4,["B1","B2"]],["Cpl",9,["B1","B2"]],["AS1(T)",6,["A+ Cert","A-Cert","A-Cert"]],["AS1",6,["A-Cert","Mech","Mech"]]];
+/* manning groups: Mech and A+ Cert count towards the A-Cert minimum */
+const MGROUP=t=>t==="B1"?"B1":t==="B2"?"B2":"A";
+const MLABEL={B1:"B1",B2:"B2",A:"A-Cert"};
+const MDEFAULT={B1:2,B2:1,A:3};
+let MIN={...MDEFAULT};try{const s=JSON.parse(localStorage.getItem("stars-min")||"null");if(s&&s.B1>=0)MIN=s}catch(e){}
+const CLOSE=1; // "close" = at minimum or this many above it
+const RANK_ORDER=RANKS.map(r=>r[0]);
+const PEOPLE=[];let si=0;
+RANKS.forEach(([rank,n,types])=>{for(let i=0;i<n;i++){
+  const type=pick(types);
+  const p={id:"p"+si,surname:SURN[si++],init:String.fromCharCode(65+Math.floor(rnd()*26)),rank,type,quals:[],awayDays:{}};
+  // absences: work reasons only, everything else shows as "Unavailable" — no leave or medical detail
+  SHIFTS.forEach(([,a,b])=>{
+    if(rnd()<.3){const why=pick(["Course","Detachment","Exercise","Unavailable"]);for(let d=D(a);d<=D(b);d=addD(d,1))p.awayDays[iso(d)]=why}
+    else for(let d=D(a);d<=D(b);d=addD(d,1))if(rnd()<.18)p.awayDays[iso(d)]=pick(["Duty","Unavailable"]);
+  });
+  QUALS.forEach(([type,name,months,only])=>{
+    if(only&&!only.includes(type))return;
+    const r=rnd();let exp;
+    if(r<.05)exp=null;                                   // missing date
+    else if(r<.11)exp=addD(today,-Math.ceil(rnd()*120)); // overdue
+    else if(r<.21)exp=addD(today,Math.ceil(rnd()*90));   // due soon
+    else exp=addD(today,91+Math.floor(rnd()*(months*30.4-91)));
+    const done=exp?addM(exp,-months):null;
+    p.quals.push({type,name,months,exp,done,gap:rnd()<.03});
+  });
+  PEOPLE.push(p);
+}});
+
+function st(q){
+  if(!q.exp)return{k:"bad",label:"No date",n:-99999};
+  const n=diff(q.exp);
+  if(n<0)return{k:"bad",label:`${-n}d overdue`,n};
+  if(n<=90)return{k:"warn",label:`${n}d left`,n};
+  return{k:"ok",label:n>540?`${Math.floor(n/365)}y ${Math.round((n%365)/30)}m`:`${Math.round(n/30)} months`,n};
+}
+PEOPLE.forEach(p=>{p.quals.forEach(q=>q.s=st(q));p.quals.sort((a,b)=>a.s.n-b.s.n);
+  p.bad=p.quals.filter(q=>q.s.k==="bad").length;p.warn=p.quals.filter(q=>q.s.k==="warn").length;
+  p.pct=Math.round(100*(p.quals.length-p.bad)/p.quals.length);
+  p.display=`${p.rank} ${p.surname} ${p.init}`;});
+const statusOn=(p,d)=>{const k=iso(d);if(shiftOn[k]&&p.awayDays[k])return"A";return shiftOn[k]||""};
+const awayWhy=(p,d)=>p.awayDays[iso(d)]||"";
+function manningOn(d){
+  const t=shiftOn[iso(d)];if(!t)return null;
+  const g={};let worst="ok";
+  ["B1","B2","A"].forEach(k=>{
+    const all=PEOPLE.filter(p=>MGROUP(p.type)===k),on=all.filter(p=>statusOn(p,d)===t),away=all.filter(p=>statusOn(p,d)==="A");
+    const n=on.length,m=MIN[k],s=n<m?"bad":n<=m+CLOSE?"warn":"ok";
+    g[k]={n,m,s,on,away,total:all.length};
+    if(s==="bad"||(s==="warn"&&worst==="ok"))worst=s;
+  });
+  return{t,g,worst};
+}
+const WORD={bad:"Below minimum",warn:"Close to minimum",ok:"Manned"};
+const rankIdx=p=>RANK_ORDER.indexOf(p.rank);
+const initials=p=>p.surname[0]+p.init;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function personRow(p,extra){
+  const today_s=statusOn(p,today);
+  const pill=extra??(p.bad?`<span class="pill bad">${p.bad} overdue</span>`:p.warn?`<span class="pill warn">${p.warn} due</span>`:`<span class="pill ok">All in date</span>`);
+  return `<button class="prow" data-p="${p.id}"><span class="av${today_s==="A"?" away":""}">${initials(p)}</span><span class="n">${esc(p.display)}<small>${p.type}${today_s==="A"?" · "+awayWhy(p,today):""} · ${p.pct}% in date</small></span>${pill}</button>`;
+}
+function bindRows(){}
+
+/* ---------- SHIFT view ---------- */
+(function(){
+  const h=now.getHours();
+  $("hello").innerHTML=`${h<12?"Morning":h<18?"Afternoon":"Evening"}, boss<span>${fmt(today,{weekday:"long",day:"numeric",month:"long"})}</span>`;
+  // which shift to show: today's if rostered, else next
+  let d=today,t=shiftOn[iso(today)];
+  if(!t){for(let i=1;i<60;i++){const x=addD(today,i);if(shiftOn[iso(x)]){d=x;t=shiftOn[iso(x)];break}}}
+  const on=PEOPLE.filter(p=>statusOn(p,d)===t),away=PEOPLE.filter(p=>statusOn(p,d)==="A");
+  const allQ=PEOPLE.flatMap(p=>p.quals),inDate=Math.round(100*allQ.filter(q=>q.s.k!=="bad").length/allQ.length);
+  const authOK=on.filter(p=>!p.quals.some(q=>q.name==="Auth to Work"&&q.s.k==="bad")).length;
+  const rel=diff(d)===0?"Today":diff(d)===1?"Tomorrow":`In ${diff(d)} days`;
+  $("hero").innerHTML=`<svg class="plane" aria-hidden="true"><use href="#lifter"/></svg><div class="chev"></div>
+    <span class="tag"><i></i>${rel} · ${fmt(d,{weekday:"short",day:"numeric",month:"short"})}</span>
+    <h2>${t?NAME[t]+" shift":"No shift"}</h2><div class="t">${t?TIME[t]:""} · A Shift</div>
+    <div class="kpis">
+      <div><b>${on.length}</b><small>On shift</small></div>
+      <div><b>${away.length}</b><small>Away</small></div>
+      <div><b>${authOK}</b><small>Auth to Work OK</small></div>
+      <div><b>${inDate}%</b><small>Quals in date</small></div>
+    </div>`;
+  SHOWN_DAY=d;drawShiftManning(d);
+  const chase=[...PEOPLE].filter(p=>p.bad).sort((a,b)=>b.bad-a.bad||a.pct-b.pct).slice(0,6);
+  $("chase").innerHTML=chase.length?chase.map(p=>personRow(p)).join(""):`<div class="empty">Nobody overdue.</div>`;
+  const soon=PEOPLE.flatMap(p=>p.quals.filter(q=>q.s.k==="warn"&&q.s.n<=30).map(q=>({p,q}))).sort((a,b)=>a.q.s.n-b.q.s.n).slice(0,6);
+  $("soon").innerHTML=soon.length?soon.map(({p,q})=>personRow(p,`<span class="pill warn">${esc(q.name)} · ${q.s.n}d</span>`)).join(""):`<div class="empty">Nothing expiring in the next 30 days.</div>`;
+  bindRows($("chase"));bindRows($("soon"));
+})();
+
+/* ---------- MANNING ---------- */
+function cell(k,x){return `<span class="mc ${x.s}" title="${MLABEL[k]}: ${x.n} on, minimum ${x.m}"><small>${MLABEL[k]}</small><b>${x.n}</b><i>min ${x.m}</i></span>`}
+function nextProblem(){
+  for(let i=0;i<120;i++){const d=addD(today,i),m=manningOn(d);if(m&&m.worst!=="ok")return{d,m}}return null;
+}
+function drawShiftManning(d){
+  const m=manningOn(d);
+  $("manNote").textContent=fmt(d,{weekday:"short",day:"numeric",month:"short"});
+  if(!m){$("man").innerHTML=`<div class="empty">No shift.</div>`;return}
+  const np=nextProblem();
+  const short=k=>m.g[k].s==="bad"?`${m.g[k].m-m.g[k].n} short`:m.g[k].s==="warn"?(m.g[k].n===m.g[k].m?"at min":"1 above"):"";
+  $("man").innerHTML=`<div class="mcells big">${["B1","B2","A"].map(k=>cell(k,m.g[k])).join("")}</div>
+    <div class="mstatus ${m.worst}"><b>${WORD[m.worst]}</b>${m.worst!=="ok"?" · "+["B1","B2","A"].filter(k=>m.g[k].s!=="ok").map(k=>`${MLABEL[k]} ${short(k)}`).join(", "):""}</div>
+    <div class="mlinks"><button class="btn" data-day="${iso(d)}">See who's working ›</button>
+    ${np&&+np.d!==+d?`<button class="more" data-day="${iso(np.d)}">Next issue: ${fmt(np.d,{weekday:"short",day:"numeric",month:"short"})} ›</button>`:`<button class="more" data-go="manning">Every shift day ›</button>`}</div>`;
+}
+function drawManning(){
+  ["B1","B2","A"].forEach(k=>$("min-"+k).textContent=MIN[k]);
+  const days=[];SHIFTS.forEach(([t,a,b])=>{for(let d=D(a);d<=D(b);d=addD(d,1))if(d>=today)days.push(d)});
+  const res=days.map(d=>({d,m:manningOn(d)}));
+  const c={bad:0,warn:0,ok:0};res.forEach(r=>c[r.m.worst]++);
+  $("mSummary").innerHTML=[["bad","days below"],["warn","days close"],["ok","days manned"]].map(([k,l])=>`<div class="card stat"><b style="color:var(--${k})">${c[k]}</b><small>${l}</small></div>`).join("");
+  let html="";
+  SHIFTS.forEach(([t,a,b])=>{
+    const rs=res.filter(r=>r.d>=D(a)&&r.d<=D(b));if(!rs.length)return;
+    const w=rs.some(r=>r.m.worst==="bad")?"bad":rs.some(r=>r.m.worst==="warn")?"warn":"ok";
+    html+=`<div class="sec"><span><span class="pill ${t}" style="margin-right:8px">${NAME[t]}</span>${fmt(a,{day:"numeric",month:"short"})} – ${fmt(b,{day:"numeric",month:"short"})}</span><small style="color:var(--${w})">${w==="ok"?"all manned":rs.filter(r=>r.m.worst!=="ok").length+" day"+(rs.filter(r=>r.m.worst!=="ok").length>1?"s":"")+" to watch"}</small></div><div class="card">`+
+    rs.map(({d,m})=>`<button class="mday ${m.worst}" data-day="${iso(d)}" aria-label="${fmt(d,{weekday:"long",day:"numeric",month:"long"})}: ${WORD[m.worst]}. Open to see who's working"><span class="dd"><b>${fmt(d,{weekday:"short"})} ${d.getDate()}</b><small>${+d===+today?"Today":fmt(d,{month:"short"})}</small></span><span class="mcells">${["B1","B2","A"].map(k=>cell(k,m.g[k])).join("")}</span><span class="go">›</span></button>`).join("")+`</div>`;
+  });
+  $("mDays").innerHTML=html;
+}
+
+/* ---------- DAY drill-down: who's working ---------- */
+const SHIFT_DAYS=[];SHIFTS.forEach(([,a,b])=>{for(let d=D(a);d<=D(b);d=addD(d,1))SHIFT_DAYS.push(iso(d))});
+function renderDay(k){
+  const d=D(k),m=manningOn(d);
+  const i=SHIFT_DAYS.indexOf(k),prev=SHIFT_DAYS[i-1],next=SHIFT_DAYS[i+1];
+  const rel=diff(d)===0?"Today":diff(d)===1?"Tomorrow":diff(d)>0?`In ${diff(d)} days`:`${-diff(d)} days ago`;
+  const typeOrder={"B1":0,"B2":1,"A+ Cert":2,"A-Cert":3,"Mech":4};
+  const prow=(p,extra)=>personRow(p,extra);
+  const groups=["B1","B2","A"].map(g=>{const x=m.g[g];
+    const on=[...x.on].sort((a,b)=>typeOrder[a.type]-typeOrder[b.type]||rankIdx(a)-rankIdx(b));
+    const gap=x.n<x.m?`${x.m-x.n} short`:x.n===x.m?"at minimum":x.n<=x.m+CLOSE?`${x.n-x.m} above`:`${x.n-x.m} spare`;
+    return `<div class="sec"><span>${MLABEL[g]}${g==="A"?" <small style='text-transform:none'>incl. A+ &amp; Mech</small>":""}</span><small style="color:var(--${x.s})">${x.n} on · min ${x.m} · ${gap}</small></div>
+      <div class="card plist">${on.length?on.map(p=>prow(p,`<span class="pill ${m.t}">${p.type}</span>`)).join(""):`<div class="empty" style="color:var(--bad)">Nobody working</div>`}</div>`}).join("");
+  const away=PEOPLE.filter(p=>statusOn(p,d)==="A").sort((a,b)=>typeOrder[a.type]-typeOrder[b.type]);
+  $("v-sub").innerHTML=`
+    <div class="dayhead">
+      <button class="dnav" ${prev?`data-day="${prev}"`:"disabled"} aria-label="Previous shift day">‹</button>
+      <div><p class="h1">${fmt(d,{weekday:"long",day:"numeric",month:"long"})}<span>${rel} · <span class="pill ${m.t}">${NAME[m.t]}</span> ${TIME[m.t]}</span></p></div>
+      <button class="dnav" ${next?`data-day="${next}"`:"disabled"} aria-label="Next shift day">›</button>
+    </div>
+    <div class="card"><div class="mcells big">${["B1","B2","A"].map(g=>cell(g,m.g[g])).join("")}</div>
+      <div class="mstatus ${m.worst}" style="margin-bottom:14px"><b>${WORD[m.worst]}</b> · ${["B1","B2","A"].reduce((s,g)=>s+m.g[g].n,0)} working, ${away.length} away</div></div>
+    ${groups}
+    ${away.length?`<div class="sec"><span>Away</span><small>${away.length}</small></div><div class="card plist">${away.map(p=>prow(p,`<span class="pill A">${awayWhy(p,d)}</span>`)).join("")}</div>`:""}`;
+}
+function setMin(k,delta){MIN[k]=Math.max(0,Math.min(20,MIN[k]+delta));try{localStorage.setItem("stars-min",JSON.stringify(MIN))}catch(e){}refreshManning()}
+function refreshManning(){drawManning();drawShiftManning(SHOWN_DAY)}
+
+/* ---------- PEOPLE view ---------- */
+let trade="all",pq="",psort="risk";
+function drawPeople(){
+  document.querySelectorAll("#v-people .chips button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===trade));
+  const q=pq.trim().toLowerCase();
+  let list=PEOPLE.filter(p=>(trade==="all"||p.type===trade)&&(!q||p.display.toLowerCase().includes(q)||p.quals.some(x=>x.s.k!=="ok"&&x.name.toLowerCase().includes(q))));
+  list.sort(psort==="name"?(a,b)=>a.surname.localeCompare(b.surname):psort==="rank"?(a,b)=>rankIdx(a)-rankIdx(b)||a.surname.localeCompare(b.surname):(a,b)=>b.bad-a.bad||b.warn-a.warn||a.surname.localeCompare(b.surname));
+  $("pcount").textContent=`${list.length} people`;
+  $("people").innerHTML=list.length?list.map(p=>personRow(p)).join(""):`<div class="empty">No one matches “${esc(pq)}”.</div>`;
+  bindRows($("people"));
+}
+document.querySelectorAll("#v-people .chips button").forEach(b=>{const n=b.dataset.t==="all"?PEOPLE.length:PEOPLE.filter(p=>p.type===b.dataset.t).length;b.insertAdjacentHTML("beforeend",`<span>${n}</span>`);b.onclick=()=>{trade=b.dataset.t;drawPeople()}});
+$("pq").addEventListener("input",e=>{pq=e.target.value;drawPeople()});
+$("psort").addEventListener("change",e=>{psort=e.target.value;drawPeople()});
+drawPeople();
+
+/* ---------- STATS view ---------- */
+(function(){
+  $("statDate").textContent=`A Shift · ${PEOPLE.length} personnel · as of ${fmt(today)}`;
+  const allQ=PEOPLE.flatMap(p=>p.quals);
+  const bad=allQ.filter(q=>q.s.k==="bad").length,warn=allQ.filter(q=>q.s.k==="warn").length,gaps=allQ.filter(q=>q.gap).length;
+  const fully=PEOPLE.filter(p=>!p.bad).length;
+  $("statTiles").innerHTML=[
+    [`${Math.round(100*(allQ.length-bad)/allQ.length)}%`,"of all quals in date"],
+    [`${fully}/${PEOPLE.length}`,"people fully in date"],
+    [bad,"overdue or missing"],
+    [warn,"due in 90 days"]
+  ].map(([b,s],i)=>`<div class="card stat"><b style="${i===2&&bad?"color:var(--bad)":i===3&&warn?"color:var(--warn)":""}">${b}</b><small>${s}</small></div>`).join("");
+  $("byRank").innerHTML=RANK_ORDER.map(r=>{
+    const ps=PEOPLE.filter(p=>p.rank===r),q=ps.flatMap(p=>p.quals);
+    const ok=q.filter(x=>x.s.k==="ok").length,w=q.filter(x=>x.s.k==="warn").length,b=q.filter(x=>x.s.k==="bad").length;
+    return `<div class="mrow"><span class="lbl">${r}</span><span class="track"><span style="flex:${ok};background:var(--ok)"></span><span style="flex:${w};background:var(--warn)"></span><span style="flex:${b};background:var(--bad)"></span></span><span class="v">${Math.round(100*(ok+w)/q.length)}%</span></div>`}).join("");
+  // compliance per qual
+  const comp=QUALS.map(([type,name])=>{const q=PEOPLE.flatMap(p=>p.quals.filter(x=>x.name===name));
+    const ok=q.filter(x=>x.s.k==="ok").length,w=q.filter(x=>x.s.k==="warn").length,b=q.filter(x=>x.s.k==="bad").length;
+    return{type,name,n:q.length,ok,w,b,pct:q.length?Math.round(100*(ok+w)/q.length):100}}).filter(c=>c.n).sort((a,b)=>a.pct-b.pct||b.b-a.b);
+  let showAll=false;
+  function drawComp(){
+    const rows=(showAll?comp:comp.slice(0,10)).map(c=>`<div class="crow"><span class="nm">${esc(c.name)}<small>${c.type==="Eng auth"?"auth":"currency"}</small></span><span class="track"><span style="flex:${c.ok};background:var(--ok)"></span><span style="flex:${c.w};background:var(--warn)"></span><span style="flex:${c.b};background:var(--bad)"></span></span><span class="v" style="color:var(--${c.pct<85?"bad":c.pct<95?"warn":"ok"})">${c.pct}%</span></div>`).join("");
+    $("comp").innerHTML=rows+`<button class="more" id="compMore">${showAll?"Show worst 10":"Show all "+comp.length+" quals"}</button>`;
+    $("compMore").onclick=()=>{showAll=!showAll;drawComp()};
+  }
+  drawComp();
+  // expiries by month
+  const months=[...Array(6)].map((_,i)=>new Date(today.getFullYear(),today.getMonth()+i,1));
+  const counts=months.map(m=>allQ.filter(q=>q.exp&&q.exp>=today&&q.exp.getFullYear()===m.getFullYear()&&q.exp.getMonth()===m.getMonth()).length);
+  const max=Math.max(...counts,1),top=Math.ceil(max/10)*10||10;
+  $("exp").innerHTML=`<div class="cols"><div class="gridline" style="bottom:50%"></div>${counts.map(c=>`<div class="c"><b>${c}</b><span class="${c===max?"hot":""}" style="height:${Math.max(3,(c/top)*100*0.82)}%"></span></div>`).join("")}</div>
+    <div class="xl">${months.map(m=>`<span>${fmt(m,{month:"short"})}</span>`).join("")}</div>`;
+})();
+
+/* ---------- PERSON drill-down ---------- */
+function renderPerson(id){
+  const p=PEOPLE.find(x=>x.id===id);
+  const start=addD(today,-((today.getDay()+6)%7));
+  let strip=["M","T","W","T","F","S","S"].map(d=>`<div class="dow">${d}</div>`).join("");
+  for(let i=0;i<28;i++){const d=addD(start,i),s=statusOn(p,d),k=iso(d),tag=shiftOn[k]?"button":"div";
+    strip+=`<${tag} class="d ${s}${+d===+today?" today":""}"${shiftOn[k]?` data-day="${k}"`:""} title="${fmt(d,{weekday:"long",day:"numeric",month:"short"})}: ${s==="A"?awayWhy(p,d):s?NAME[s]:"Off"}">${d.getDate()}<small>${s||"&nbsp;"}</small></${tag}>`}
+  const awayList=Object.keys(p.awayDays).filter(k=>D(k)>=today).sort().slice(0,6);
+  const grp=(k,title)=>{const g=p.quals.filter(q=>q.s.k===k);if(!g.length)return"";
+    return `<div class="sec">${title} <small>${g.length}</small></div><div class="card">${g.map(q=>`<div class="qrow"><div class="n">${esc(q.name)}<small>${q.type}${q.exp?" · expires "+fmt(q.exp):" · no date recorded"}${q.gap?" · no evidence in folder":""}</small></div><span class="pill ${q.s.k}">${q.s.label}</span></div>`).join("")}</div>`};
+  const ok=p.quals.length-p.bad-p.warn;
+  $("v-sub").innerHTML=`
+    <div class="phead"><span class="av">${initials(p)}</span><div><h2>${esc(p.display)}</h2><p>${p.type} · ${TYPE_DESC[p.type]} · A Shift</p></div></div>
+    <div class="card ready"><div class="row1"><span class="big">${p.pct}%<small>in date</small></span>${p.bad?`<span class="pill bad">${p.bad} need action</span>`:`<span class="pill ok">All good</span>`}</div>
+      <div class="bars"><span style="flex:${ok};background:var(--ok)"></span><span style="flex:${p.warn};background:var(--warn)"></span><span style="flex:${p.bad};background:var(--bad)"></span></div></div>
+    <div class="sec">Next 4 weeks <small>tap a shift day</small></div><div class="card strip">${strip}</div>
+    ${awayList.length?`<div class="sec">Away on shift days</div><div class="card">${awayList.map(k=>`<button class="qrow" data-day="${k}"><div class="n">${fmt(k,{weekday:"short",day:"numeric",month:"short"})}<small>${NAME[shiftOn[k]]} shift</small></div><span class="pill A">${p.awayDays[k]}</span></button>`).join("")}</div>`:""}
+    ${grp("bad","Overdue or missing")}${grp("warn","Due in 90 days")}${grp("ok","In date")}`;
+}
+
+/* ---------- navigation: tabs + drill-down stack ---------- */
+const TABS=["shift","manning","people","stats"];
+let cur={k:"tab",v:"shift"};const hist=[];
+function render(st){
+  const sub=st.k!=="tab";
+  TABS.forEach(t=>{$("v-"+t).hidden=sub||t!==st.v});
+  if(!sub)TABS.forEach(t=>$("t-"+t).setAttribute("aria-selected",t===st.v));
+  $("v-sub").hidden=!sub;$("back").hidden=!sub;
+  if(st.k==="day")renderDay(st.d);
+  if(st.k==="person")renderPerson(st.id);
+  window.scrollTo(0,0);
+}
+function open(st){if(cur.k==="day"&&st.k==="day")cur=st;else{hist.push(cur);cur=st}render(cur)}
+function go(v){hist.length=0;cur={k:"tab",v};render(cur)}
+$("back").onclick=()=>{cur=hist.pop()||{k:"tab",v:"shift"};render(cur)};
+document.addEventListener("click",e=>{
+  const g=e.target.closest("[data-go]");if(g){go(g.dataset.go);return}
+  const dd=e.target.closest("[data-day]");if(dd&&!dd.disabled){open({k:"day",d:dd.dataset.day});return}
+  const pp=e.target.closest("[data-p]");if(pp){open({k:"person",id:pp.dataset.p})}
+});
+document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>setMin(b.dataset.k,+b.dataset.step));
+$("minReset").onclick=()=>{MIN={...MDEFAULT};try{localStorage.setItem("stars-min",JSON.stringify(MIN))}catch(e){}refreshManning()};
+drawManning();
+const hv=(location.hash||"").slice(1);go(["shift","manning","people","stats"].includes(hv)?hv:"shift");
+</script>
+</body>
+</html>
