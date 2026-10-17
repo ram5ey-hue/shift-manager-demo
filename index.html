@@ -314,7 +314,7 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
   </section>
 
   <section class="view" id="v-planning" role="tabpanel" hidden>
-    <p class="h1">CAS Bay hours<span>Hours available by engineer type, 7 days a week, Earlies and Lates</span></p>
+    <p class="h1" id="planTitle">Hours available<span>By engineer type, 7 days a week, Earlies and Lates</span></p>
     <div class="card minset">
       <div class="minrow" style="border-bottom:0"><span><b style="font-size:1.1rem">Productive hours</b><small>per person, per shift</small></span><span class="step"><button id="hrsDown" aria-label="Fewer productive hours">−</button><output id="hrs"></output><button id="hrsUp" aria-label="More productive hours">+</button></span></div>
     </div>
@@ -322,7 +322,7 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
     <div class="pbtns"><button class="btn" id="copyTsv">Copy table for Excel</button><button class="btn ghost" id="copyMsg">Copy as message</button></div>
     <div class="card ptable-wrap"><table class="pt" id="ptable"></table></div>
     <textarea class="copybox" id="copybox" hidden readonly aria-label="Copied text"></textarea>
-    <p class="foot">Hours = CAS Bay engineers of that type rostered on and not away × productive hours. Headcount shown underneath.<br>Tap a row to see who's working.</p>
+    <p class="foot">Hours = engineers of that type at the selected location, rostered on and not away × productive hours. Use the Line / CAS Bay switch at the top to change location. Headcount shown underneath.<br>Tap a row to see who's working.</p>
   </section>
 
   <section class="view" id="v-people" role="tabpanel" hidden>
@@ -540,10 +540,11 @@ function renderManning(){
 }
 
 /* ---------- PLANNING (CAS Bay, 7 days, E + L) ---------- */
-function planRows(){const out=[];DAYS.filter(k=>D(k)>=today).forEach(k=>["E","L"].forEach(s=>out.push({k,d:D(k),s,m:manningOn(D(k),"CAS",s)})));return out}
+function planRows(){const out=[];DAYS.filter(k=>D(k)>=today).forEach(k=>["E","L"].forEach(s=>out.push({k,d:D(k),s,m:manningOn(D(k),LOC,s)})));return out}
 const hrsOf=n=>n*HRS;
 const hfmt=v=>Number.isInteger(v)?String(v):v.toFixed(1);
 function renderPlanning(){
+  $("planTitle").innerHTML=`${LOCNAME[LOC]} hours<span>By engineer type, 7 days a week, ${LOC==="CAS"?"ME and ML":"Earlies and Lates"}</span>`;
   $("hrs").textContent=HRS.toFixed(1);
   const rows=planRows();
   const wk=rows.filter(r=>diff(r.d)<7);
@@ -558,7 +559,7 @@ function renderPlanning(){
   const c=(n)=>`${hfmt(hrsOf(n))}<small class="hc">${n} ${n===1?"person":"people"}</small>`;
   Object.entries(weeks).forEach(([w,rs])=>{
     h+=`<tr class="wk"><td colspan="${TYPES.length+5}">Week of ${fmt(w,{weekday:"short",day:"numeric",month:"short"})}</td></tr>`;
-    rs.forEach(({k,d,s,m})=>{h+=`<tr data-day="${k}" data-slot="${s}"${s==="E"?' class="dfirst"':""}><td class="dt">${s==="E"?fmt(d,{weekday:"short",day:"numeric",month:"short"}):""}</td><td><span class="pill ${s}">${CODE(s,"CAS")} · ${NAME[s]}</span></td><td>${tl(m.team)}</td>${TYPES.map(t=>`<td class="th${m.byType[t]?"":" zero"}">${c(m.byType[t])}</td>`).join("")}<td class="hrs">${c(m.total)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
+    rs.forEach(({k,d,s,m})=>{h+=`<tr data-day="${k}" data-slot="${s}"${s==="E"?' class="dfirst"':""}><td class="dt">${s==="E"?fmt(d,{weekday:"short",day:"numeric",month:"short"}):""}</td><td><span class="pill ${s}">${CODE(s,LOC)} · ${NAME[s]}</span></td><td>${tl(m.team)}</td>${TYPES.map(t=>`<td class="th${m.byType[t]?"":" zero"}">${c(m.byType[t])}</td>`).join("")}<td class="hrs">${c(m.total)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
     const sum=t=>rs.reduce((s,r)=>s+(t?r.m.byType[t]:r.m.total),0);
     h+=`<tr class="sub"><td>Week total</td><td></td><td></td>${TYPES.map(t=>`<td>${hfmt(hrsOf(sum(t)))}</td>`).join("")}<td class="hrs">${hfmt(hrsOf(sum()))}</td><td></td></tr>`;
   });
@@ -566,14 +567,14 @@ function renderPlanning(){
 }
 function tsv(){
   const head=["Date","Day","Shift code","Shift","Team",...TYPES.map(t=>t+" hrs"),"Total hrs",...TYPES.map(t=>t+" people"),"Total people","Status"];
-  return [head.join("\t"),...planRows().map(({d,s,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),fmt(d,{weekday:"short"}),CODE(s,"CAS"),NAME[s],m.team,...TYPES.map(t=>hfmt(hrsOf(m.byType[t]))),hfmt(hrsOf(m.total)),...TYPES.map(t=>m.byType[t]),m.total,WORD[m.worst]].join("\t"))].join("\n");
+  return [head.join("\t"),...planRows().map(({d,s,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),fmt(d,{weekday:"short"}),CODE(s,LOC),NAME[s],m.team,...TYPES.map(t=>hfmt(hrsOf(m.byType[t]))),hfmt(hrsOf(m.total)),...TYPES.map(t=>m.byType[t]),m.total,WORD[m.worst]].join("\t"))].join("\n");
 }
 function message(){
   const rows=planRows().filter(r=>diff(r.d)<14);
-  let out=`CAS Bay engineer hours available, next 14 days (${HRS.toFixed(1)} productive hrs per person per shift)\n`;
+  let out=`${LOCNAME[LOC]} engineer hours available, next 14 days (${HRS.toFixed(1)} productive hrs per person per shift)\n`;
   let last="";
   rows.forEach(({k,d,s,m})=>{if(k!==last){out+=`\n${fmt(d,{weekday:"short",day:"numeric",month:"short"})}\n`;last=k}
-    out+=`  ${CODE(s,"CAS")} ${NAME[s]} (${m.team} Shift): B1 ${hfmt(hrsOf(m.byType["B1"]))}h, B2 ${hfmt(hrsOf(m.byType["B2"]))}h, A+ ${hfmt(hrsOf(m.byType["A+ Cert"]))}h, A-Cert ${hfmt(hrsOf(m.byType["A-Cert"]))}h, Mech ${hfmt(hrsOf(m.byType["Mech"]))}h — total ${hfmt(hrsOf(m.total))}h${m.worst==="bad"?" (BELOW MINIMUM)":""}\n`});
+    out+=`  ${CODE(s,LOC)} ${NAME[s]} (${m.team} Shift): B1 ${hfmt(hrsOf(m.byType["B1"]))}h, B2 ${hfmt(hrsOf(m.byType["B2"]))}h, A+ ${hfmt(hrsOf(m.byType["A+ Cert"]))}h, A-Cert ${hfmt(hrsOf(m.byType["A-Cert"]))}h, Mech ${hfmt(hrsOf(m.byType["Mech"]))}h — total ${hfmt(hrsOf(m.total))}h${m.worst==="bad"?" (BELOW MINIMUM)":""}\n`});
   return out;
 }
 async function copy(text,label){
@@ -634,7 +635,7 @@ function renderDay(k,loc,slot){
     </div>
     <div class="slotsw" role="group" aria-label="Shift">${["E","L"].map(s=>`<button class="${s}" data-day="${k}" data-slot="${s}" data-loc="${loc}" aria-pressed="${s===slot}">${CODE(s,loc)} · ${ROSTER[k][s]} Shift</button>`).join("")}</div>
     <div class="card"><div class="mcells big">${["B1","B2","A"].map(g=>cell(g,m.g[g])).join("")}</div>
-      <div class="mstatus ${m.worst}" style="margin-bottom:14px"><b>${WORD[m.worst]}</b> · ${m.team} Shift ${CODE(slot,loc)} ${TIME[slot]} · ${m.total} working, ${m.away.length} away${loc==="CAS"?` · ${(m.total*HRS).toFixed(0)} man-hours`:""}</div></div>
+      <div class="mstatus ${m.worst}" style="margin-bottom:14px"><b>${WORD[m.worst]}</b> · ${m.team} Shift ${CODE(slot,loc)} ${TIME[slot]} · ${m.total} working, ${m.away.length} away · ${(m.total*HRS).toFixed(0)} man-hours</div></div>
     ${groups}
     ${m.away.length?`<div class="sec"><span>Away</span><small>${m.away.length}</small></div><div class="card plist">${m.away.sort((a,b)=>TYPE_ORDER[a.type]-TYPE_ORDER[b.type]).map(p=>personRow(p,`<span class="pill A">${awayWhy(p,d)}</span>`)).join("")}</div>`:""}`;
 }
@@ -680,7 +681,7 @@ document.addEventListener("click",e=>{
   const lb=e.target.closest(".locseg [data-loc]");if(lb){setLoc(lb.dataset.loc);return}
   const g=e.target.closest("[data-go]");if(g){go(g.dataset.go);return}
   const dd=e.target.closest("[data-day]");if(dd&&!dd.disabled){
-    const loc=dd.dataset.loc||(cur.k==="tab"&&cur.v==="planning"?"CAS":LOC);
+    const loc=dd.dataset.loc||LOC;
     const slot=dd.dataset.slot||"E";
     open({k:"day",d:dd.dataset.day,loc,slot});return}
   const pp=e.target.closest("[data-p]");if(pp){open({k:"person",id:pp.dataset.p});return}
