@@ -262,6 +262,10 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
 .pt tr.wk td{background:var(--bg);font-family:var(--display);font-weight:600;letter-spacing:.04em;text-align:left;padding-top:12px}
 .pt tr.dfirst td{border-top:2px solid var(--line)}
 .pt td.dt{font-weight:600}
+.pt td.th,.pt td.hrs{line-height:1.1}
+.pt td.th{font-family:var(--display);font-size:1.05rem;font-weight:600}
+.pt td.zero{color:var(--muted);opacity:.6}
+.pt small.hc{display:block;font-family:var(--mono);font-size:.62rem;font-weight:400;color:var(--muted);letter-spacing:0}
 </style>
 </head>
 <body>
@@ -310,15 +314,15 @@ table.pt{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeri
   </section>
 
   <section class="view" id="v-planning" role="tabpanel" hidden>
-    <p class="h1">CAS Bay capacity<span>Engineers available 7 days a week, Earlies and Lates</span></p>
+    <p class="h1">CAS Bay hours<span>Hours available by engineer type, 7 days a week, Earlies and Lates</span></p>
     <div class="card minset">
       <div class="minrow" style="border-bottom:0"><span><b style="font-size:1.1rem">Productive hours</b><small>per person, per shift</small></span><span class="step"><button id="hrsDown" aria-label="Fewer productive hours">−</button><output id="hrs"></output><button id="hrsUp" aria-label="More productive hours">+</button></span></div>
     </div>
-    <div class="statgrid three" id="pSummary"></div>
+    <div class="statgrid three" id="pSummary" style="grid-template-columns:repeat(3,1fr)"></div>
     <div class="pbtns"><button class="btn" id="copyTsv">Copy table for Excel</button><button class="btn ghost" id="copyMsg">Copy as message</button></div>
     <div class="card ptable-wrap"><table class="pt" id="ptable"></table></div>
     <textarea class="copybox" id="copybox" hidden readonly aria-label="Copied text"></textarea>
-    <p class="foot">Counts are CAS Bay engineers rostered on and not away. Man-hours = people × productive hours.<br>Tap a row to see who's working.</p>
+    <p class="foot">Hours = CAS Bay engineers of that type rostered on and not away × productive hours. Headcount shown underneath.<br>Tap a row to see who's working.</p>
   </section>
 
   <section class="view" id="v-people" role="tabpanel" hidden>
@@ -532,35 +536,39 @@ function renderManning(){
 
 /* ---------- PLANNING (CAS Bay, 7 days, E + L) ---------- */
 function planRows(){const out=[];DAYS.filter(k=>D(k)>=today).forEach(k=>["E","L"].forEach(s=>out.push({k,d:D(k),s,m:manningOn(D(k),"CAS",s)})));return out}
+const hrsOf=n=>n*HRS;
+const hfmt=v=>Number.isInteger(v)?String(v):v.toFixed(1);
 function renderPlanning(){
   $("hrs").textContent=HRS.toFixed(1);
   const rows=planRows();
   const wk=rows.filter(r=>diff(r.d)<7);
-  const hrs7=wk.reduce((s,r)=>s+r.m.total*HRS,0);
-  const avgE=rows.filter(r=>r.s==="E"),avgL=rows.filter(r=>r.s==="L");
-  const avg=a=>a.length?(a.reduce((s,r)=>s+r.m.total,0)/a.length).toFixed(1):"0";
   const below=rows.filter(r=>r.m.worst==="bad").length;
-  $("pSummary").innerHTML=[[Math.round(hrs7).toLocaleString("en-GB"),"man-hours, next 7 days"],[`${avg(avgE)} / ${avg(avgL)}`,"avg engineers Early / Late"],[below,"shifts below minimum"]].map(([b,l],i)=>`<div class="card stat"><b${i===2&&below?' style="color:var(--bad)"':""}>${b}</b><small>${l}</small></div>`).join("");
-  let h=`<thead><tr><th>Date</th><th>Shift</th><th>Team</th>${TYPES.map(t=>`<th>${t}</th>`).join("")}<th>Total</th><th>Man-hrs</th><th>Min</th></tr></thead><tbody>`;
+  const tot=t=>wk.reduce((s,r)=>s+hrsOf(r.m.byType[t]),0);
+  const all=wk.reduce((s,r)=>s+hrsOf(r.m.total),0);
+  $("pSummary").innerHTML=`<div class="sec" style="grid-column:1/-1;margin:0"><span>Next 7 days · hours by type</span><small${below?' style="color:var(--bad)"':""}>${below} shifts below minimum</small></div>`+
+    TYPES.map(t=>`<div class="card stat"><b>${Math.round(tot(t)).toLocaleString("en-GB")}</b><small>${t} hours</small></div>`).join("")+
+    `<div class="card stat" style="background:var(--navy);color:var(--on-navy);border-color:var(--navy)"><b>${Math.round(all).toLocaleString("en-GB")}</b><small style="color:var(--on-navy);opacity:.8">all engineers</small></div>`;
+  let h=`<thead><tr><th>Date</th><th>Shift</th><th>Team</th>${TYPES.map(t=>`<th>${t} hrs</th>`).join("")}<th>Total hrs</th><th>Min</th></tr></thead><tbody>`;
   const weeks={};rows.forEach(r=>{const w=iso(weekStart(r.d));(weeks[w]=weeks[w]||[]).push(r)});
+  const c=(n)=>`${hfmt(hrsOf(n))}<small class="hc">${n} ${n===1?"person":"people"}</small>`;
   Object.entries(weeks).forEach(([w,rs])=>{
-    h+=`<tr class="wk"><td colspan="${TYPES.length+6}">Week of ${fmt(w,{weekday:"short",day:"numeric",month:"short"})}</td></tr>`;
-    rs.forEach(({k,d,s,m})=>{h+=`<tr data-day="${k}" data-slot="${s}"${s==="E"?' class="dfirst"':""}><td class="dt">${s==="E"?fmt(d,{weekday:"short",day:"numeric",month:"short"}):""}</td><td><span class="pill ${s}">${NAME[s]}</span></td><td>${tl(m.team)}</td>${TYPES.map(t=>`<td>${m.byType[t]}</td>`).join("")}<td class="tot">${m.total}</td><td class="hrs">${(m.total*HRS).toFixed(0)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
-    const sum=rs.reduce((s,r)=>s+r.m.total,0);
-    h+=`<tr class="sub"><td>Week total</td><td></td><td></td>${TYPES.map(t=>`<td>${rs.reduce((s,r)=>s+r.m.byType[t],0)}</td>`).join("")}<td class="tot">${sum}</td><td class="hrs">${(sum*HRS).toFixed(0)}</td><td></td></tr>`;
+    h+=`<tr class="wk"><td colspan="${TYPES.length+5}">Week of ${fmt(w,{weekday:"short",day:"numeric",month:"short"})}</td></tr>`;
+    rs.forEach(({k,d,s,m})=>{h+=`<tr data-day="${k}" data-slot="${s}"${s==="E"?' class="dfirst"':""}><td class="dt">${s==="E"?fmt(d,{weekday:"short",day:"numeric",month:"short"}):""}</td><td><span class="pill ${s}">${NAME[s]}</span></td><td>${tl(m.team)}</td>${TYPES.map(t=>`<td class="th${m.byType[t]?"":" zero"}">${c(m.byType[t])}</td>`).join("")}<td class="hrs">${c(m.total)}</td><td class="st"><span style="background:var(--${m.worst})" title="${WORD[m.worst]}"></span></td></tr>`});
+    const sum=t=>rs.reduce((s,r)=>s+(t?r.m.byType[t]:r.m.total),0);
+    h+=`<tr class="sub"><td>Week total</td><td></td><td></td>${TYPES.map(t=>`<td>${hfmt(hrsOf(sum(t)))}</td>`).join("")}<td class="hrs">${hfmt(hrsOf(sum()))}</td><td></td></tr>`;
   });
   $("ptable").innerHTML=h+"</tbody>";
 }
 function tsv(){
-  const head=["Date","Day","Shift","Team",...TYPES,"Total","Man-hours","Status"];
-  return [head.join("\t"),...planRows().map(({d,s,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),fmt(d,{weekday:"short"}),NAME[s],m.team,...TYPES.map(t=>m.byType[t]),m.total,(m.total*HRS).toFixed(1),WORD[m.worst]].join("\t"))].join("\n");
+  const head=["Date","Day","Shift","Team",...TYPES.map(t=>t+" hrs"),"Total hrs",...TYPES.map(t=>t+" people"),"Total people","Status"];
+  return [head.join("\t"),...planRows().map(({d,s,m})=>[fmt(d,{day:"2-digit",month:"2-digit",year:"numeric"}),fmt(d,{weekday:"short"}),NAME[s],m.team,...TYPES.map(t=>hfmt(hrsOf(m.byType[t]))),hfmt(hrsOf(m.total)),...TYPES.map(t=>m.byType[t]),m.total,WORD[m.worst]].join("\t"))].join("\n");
 }
 function message(){
   const rows=planRows().filter(r=>diff(r.d)<14);
-  let out=`CAS Bay engineer availability, next 14 days (${HRS.toFixed(1)} productive hrs per person per shift)\n`;
+  let out=`CAS Bay engineer hours available, next 14 days (${HRS.toFixed(1)} productive hrs per person per shift)\n`;
   let last="";
   rows.forEach(({k,d,s,m})=>{if(k!==last){out+=`\n${fmt(d,{weekday:"short",day:"numeric",month:"short"})}\n`;last=k}
-    out+=`  ${NAME[s]} (${m.team} Shift): ${m.total} engineers — B1 ${m.byType["B1"]}, B2 ${m.byType["B2"]}, A+ ${m.byType["A+ Cert"]}, A ${m.byType["A-Cert"]}, Mech ${m.byType["Mech"]} = ${(m.total*HRS).toFixed(0)} man-hrs${m.worst==="bad"?" — BELOW MINIMUM":""}\n`});
+    out+=`  ${NAME[s]} (${m.team} Shift): B1 ${hfmt(hrsOf(m.byType["B1"]))}h, B2 ${hfmt(hrsOf(m.byType["B2"]))}h, A+ ${hfmt(hrsOf(m.byType["A+ Cert"]))}h, A-Cert ${hfmt(hrsOf(m.byType["A-Cert"]))}h, Mech ${hfmt(hrsOf(m.byType["Mech"]))}h — total ${hfmt(hrsOf(m.total))}h${m.worst==="bad"?" (BELOW MINIMUM)":""}\n`});
   return out;
 }
 async function copy(text,label){
